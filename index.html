@@ -194,7 +194,10 @@
       <div class="space-y-2">
         <div class="flex items-center justify-between px-1">
           <span class="text-xs font-extrabold text-md-onSurfaceVariant">登録メンバー一覧</span>
-          <span id="sidebar-profile-count" class="text-[11px] font-bold text-md-onSurfaceVariant">0人</span>
+          <div class="flex items-center gap-2">
+            <button onclick="if(window.__manualCloudSync) window.__manualCloudSync()" class="text-[11px] font-bold text-md-primary hover:underline">再同期</button>
+            <span id="sidebar-profile-count" class="text-[11px] font-bold text-md-onSurfaceVariant">0人</span>
+          </div>
         </div>
         <div id="sidebar-profile-list" class="space-y-1.5"></div>
       </div>
@@ -276,6 +279,9 @@
             <div class="flex items-center gap-2 flex-wrap shrink-0">
               <button id="edit-profile-btn" onclick="openProfileEditModal()" class="m3-state-layer h-10 px-4 rounded-full border border-md-outline bg-md-surfaceContainerLowest text-xs font-bold text-md-onSurface">
                 プロフィール編集
+              </button>
+              <button id="delete-profile-btn" onclick="openDeleteProfileModal(activeProfileId, event)" class="m3-state-layer h-10 px-4 rounded-full border border-red-400 bg-red-50 text-xs font-bold text-red-900">
+                プロフィール削除
               </button>
               <button id="go-explore-btn" onclick="switchTab('edit')" class="m3-state-layer h-10 px-4 rounded-full bg-md-primary text-md-onPrimary text-xs font-bold">
                 ＋ 作品を追加・探索
@@ -412,38 +418,35 @@
       <!-- ========================================== -->
       <div id="view-seasonal" class="hidden space-y-6 max-w-[1400px] mx-auto pb-12">
         <div class="p-6 rounded-[24px] bg-md-surfaceContainerLowest border border-md-outlineVariant space-y-4">
-          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <span id="seasonal-current-badge" class="text-xs font-extrabold uppercase tracking-wider text-md-primary">CURRENT SEASON ANIME</span>
-              <h2 class="text-2xl font-extrabold text-md-onSurface mt-0.5">今期のアニメ・みんなの見ている／見る予定ボード</h2>
+              <span id="seasonal-current-badge" class="text-xs font-extrabold uppercase tracking-wider text-md-primary">SEASONAL ANIME BOARD</span>
+              <h1 class="text-2xl font-extrabold text-md-onSurface mt-0.5">今期のアニメ 視聴状況ボード</h1>
               <p class="text-xs text-md-onSurfaceVariant mt-1">
-                現在放送中・今期シーズンのTVアニメ一覧です。誰が「見ている」か・誰が「見る予定」かが一目で分かり、自分の視聴状況もワンタップで登録できます。
+                登録メンバーの誰がどの今期アニメを「見ている」か「見る予定」かが一目でわかります。自分のステータスもワンタップで登録できます。
               </p>
             </div>
-
             <div class="flex items-center gap-2 flex-wrap">
-              <select id="seasonal-period-select" onchange="changeSeasonalPeriod(this.value)" class="h-10 px-3.5 rounded-xl bg-md-surfaceContainerLow border border-md-outlineVariant text-xs font-bold text-md-onSurface">
-                <option value="CURRENT">現在放送中（今期アニメ）</option>
-              </select>
-              <button onclick="fetchLiveSeasonalAnimeFromApi(true)" id="seasonal-fetch-btn" class="m3-state-layer h-10 px-4 rounded-full bg-md-primary text-md-onPrimary text-xs font-bold">
+              <select id="seasonal-period-select" onchange="changeSeasonalPeriod(this.value)" class="h-10 px-3.5 rounded-xl bg-md-surfaceContainerLow border border-md-outlineVariant text-xs font-bold text-md-onSurface focus:outline-none focus:border-md-primary"></select>
+              <button id="seasonal-fetch-btn" onclick="fetchLiveSeasonalAnimeFromApi(true)" class="m3-state-layer h-10 px-4 rounded-full bg-md-secondaryContainer text-md-onSecondaryContainer text-xs font-bold">
                 最新データを再取得
               </button>
             </div>
           </div>
 
-          <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-2 border-t border-md-outlineVariant/50">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 border-t border-md-outlineVariant/60">
+            <div class="flex items-center gap-2 overflow-x-auto ytm-shelf-scroll">
+              <button onclick="setSeasonalFilter('ALL')" id="seasonal-filter-ALL" class="m3-filter-chip selected">すべての今期作品</button>
+              <button onclick="setSeasonalFilter('SOMEONE_WATCHING')" id="seasonal-filter-SOMEONE_WATCHING" class="m3-filter-chip">誰かが見ている・見る予定</button>
+              <button onclick="setSeasonalFilter('MY_WATCHING')" id="seasonal-filter-MY_WATCHING" class="m3-filter-chip">自分が登録した今期作品</button>
+            </div>
             <input
               type="text"
               id="seasonal-search-input"
               oninput="renderSeasonalMainGrid()"
               placeholder="今期アニメのタイトルで絞り込み..."
-              class="h-10 px-4 rounded-full bg-md-surfaceContainerLow border border-md-outlineVariant text-xs text-md-onSurface focus:outline-none focus:border-md-primary sm:w-80"
+              class="h-9 px-3.5 rounded-xl bg-md-surfaceContainerLow border border-md-outlineVariant text-xs text-md-onSurface w-full sm:w-64 focus:outline-none focus:border-md-primary"
             >
-            <div class="flex items-center gap-1.5">
-              <button onclick="setSeasonalFilter('ALL')" id="seasonal-filter-ALL" class="m3-filter-chip selected">すべての今期作品</button>
-              <button onclick="setSeasonalFilter('SOMEONE_WATCHING')" id="seasonal-filter-SOMEONE_WATCHING" class="m3-filter-chip">誰かが見ている・予定</button>
-              <button onclick="setSeasonalFilter('MY_WATCHING')" id="seasonal-filter-MY_WATCHING" class="m3-filter-chip">自分が登録中</button>
-            </div>
           </div>
         </div>
 
@@ -451,87 +454,82 @@
       </div>
 
       <!-- ========================================== -->
-      <!-- VIEW 3: 探索・作品追加（エンドレスストリーム） -->
+      <!-- VIEW 3: 探索・作品追加（常に自分のライブラリへ追加） -->
       <!-- ========================================== -->
       <div id="view-edit" class="hidden space-y-6 max-w-[1400px] mx-auto pb-12">
         <div class="p-6 rounded-[24px] bg-md-surfaceContainerLowest border border-md-outlineVariant space-y-4">
-          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <span class="text-xs font-extrabold uppercase tracking-wider text-md-primary">DISCOVER & ADD TO MY LIBRARY</span>
-              <h2 class="text-2xl font-extrabold text-md-onSurface mt-0.5">探索・マイライブラリへ作品追加</h2>
-              <p id="explore-target-owner-label" class="text-xs text-md-onSurfaceVariant mt-1">
-                検索または一覧から「アニメ / 漫画 / 両方」「完走 / 途中まで / 1期・序盤」を選んでマイライブラリへ直接追加できます。
+              <h1 class="text-2xl font-extrabold text-md-onSurface mt-0.5">探索・マイライブラリへ作品追加</h1>
+              <p id="explore-target-account-label" class="text-xs font-bold text-md-primary mt-1">
+                選択した作品は現在ログイン中のあなたのプロフィールに直接追加されます（追加時に画面はリロードされません）。
               </p>
             </div>
 
             <div class="flex items-center gap-2 flex-wrap">
-              <div class="inline-flex rounded-full border border-md-outlineVariant bg-md-surfaceContainerLow p-1">
+              <div class="inline-flex rounded-full p-1 bg-md-surfaceContainerHigh border border-md-outlineVariant">
                 <button onclick="setExploreMediaType('ALL')" id="explore-type-ALL" class="px-3.5 py-1 rounded-full text-xs font-bold bg-md-primary text-md-onPrimary">すべて</button>
                 <button onclick="setExploreMediaType('ANIME')" id="explore-type-ANIME" class="px-3.5 py-1 rounded-full text-xs font-bold text-md-onSurfaceVariant">アニメ</button>
                 <button onclick="setExploreMediaType('MANGA')" id="explore-type-MANGA" class="px-3.5 py-1 rounded-full text-xs font-bold text-md-onSurfaceVariant">漫画</button>
               </div>
-
-              <label class="flex items-center gap-1.5 text-xs font-bold text-md-onSurfaceVariant px-3 py-2 rounded-full bg-md-surfaceContainerLow border border-md-outlineVariant cursor-pointer">
-                <input type="checkbox" id="explore-hide-registered" onchange="renderExploreStreamGrid()" class="rounded">
-                未登録のみ表示
-              </label>
-
-              <button onclick="shuffleAndLoadMoreExplore()" class="m3-state-layer h-9 px-4 rounded-full bg-md-secondaryContainer text-md-onSecondaryContainer text-xs font-extrabold">
+              <button onclick="shuffleAndLoadMoreExplore()" class="m3-state-layer h-9 px-4 rounded-full bg-md-secondaryContainer text-md-onSecondaryContainer text-xs font-bold">
                 シャッフル補充
               </button>
             </div>
           </div>
 
-          <!-- 探索検索バー -->
-          <div class="flex gap-2">
+          <div class="flex flex-col sm:flex-row gap-2">
             <input
               type="text"
               id="explore-search-input"
-              placeholder="作品タイトルを検索（例: 葬送のフリーレン、SLAM DUNK、チ。、ダンジョン飯）..."
+              placeholder="作品タイトルで検索（Enterで検索実行・検索中はその作品のみ表示）..."
               onkeydown="if(event.key==='Enter') executeExploreSearch()"
-              class="flex-1 h-11 px-4 rounded-full bg-md-surfaceContainerLow border border-md-outlineVariant text-sm text-md-onSurface focus:outline-none focus:border-md-primary"
+              class="flex-1 h-11 px-4 rounded-xl bg-md-surfaceContainerLow border border-md-outlineVariant text-sm text-md-onSurface focus:outline-none focus:border-md-primary"
             >
-            <button onclick="executeExploreSearch()" class="m3-state-layer h-11 px-6 rounded-full bg-md-primary text-md-onPrimary text-xs font-extrabold">
-              作品を検索
+            <button onclick="executeExploreSearch()" class="m3-state-layer h-11 px-6 rounded-xl bg-md-primary text-md-onPrimary text-xs font-bold shrink-0">
+              検索する
             </button>
-            <button onclick="clearExploreSearch()" id="explore-clear-btn" class="hidden m3-state-layer h-11 px-4 rounded-full border border-md-outlineVariant bg-md-surfaceContainerLowest text-xs font-bold text-md-onSurfaceVariant">
+            <button onclick="clearExploreSearch()" id="explore-clear-btn" class="hidden m3-state-layer h-11 px-4 rounded-xl bg-md-surfaceContainerHigh text-md-onSurface text-xs font-bold shrink-0">
               クリア
             </button>
           </div>
 
-          <!-- ジャンルチップ -->
-          <div class="flex items-center gap-2 overflow-x-auto ytm-shelf-scroll py-1" id="explore-genre-chips">
-            <button onclick="selectExploreCategory('ALL')" data-cat="ALL" class="m3-filter-chip selected">すべて表示</button>
-            <button onclick="selectExploreCategory('バトル')" data-cat="バトル" class="m3-filter-chip">バトル・アクション</button>
-            <button onclick="selectExploreCategory('ファンタジー')" data-cat="ファンタジー" class="m3-filter-chip">ファンタジー</button>
-            <button onclick="selectExploreCategory('SF・考察')" data-cat="SF・考察" class="m3-filter-chip">SF・ミステリー・考察</button>
-            <button onclick="selectExploreCategory('日常・青春')" data-cat="日常・青春" class="m3-filter-chip">日常・青春・コメディ</button>
+          <div class="flex items-center justify-between gap-3 flex-wrap pt-1">
+            <div class="flex items-center gap-2 overflow-x-auto ytm-shelf-scroll" id="explore-genre-chips">
+              <button onclick="selectExploreCategory('ALL')" data-cat="ALL" class="m3-filter-chip selected">すべてのジャンル</button>
+              <button onclick="selectExploreCategory('SF・考察')" data-cat="SF・考察" class="m3-filter-chip">SF・考察</button>
+              <button onclick="selectExploreCategory('ファンタジー')" data-cat="ファンタジー" class="m3-filter-chip">ファンタジー</button>
+              <button onclick="selectExploreCategory('バトル')" data-cat="バトル" class="m3-filter-chip">バトル</button>
+              <button onclick="selectExploreCategory('日常・青春')" data-cat="日常・青春" class="m3-filter-chip">日常・青春</button>
+            </div>
+            <label class="flex items-center gap-2 text-xs font-bold text-md-onSurfaceVariant cursor-pointer select-none">
+              <input type="checkbox" id="explore-hide-registered" onchange="renderExploreStreamGrid()" class="rounded border-md-outline">
+              登録済みの作品を隠す
+            </label>
           </div>
         </div>
 
-        <!-- 探索ストリームグリッド -->
         <div id="explore-stream-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4"></div>
 
-        <!-- 下部ローディング・追加読み込みボタン -->
-        <div id="explore-load-more-container" class="flex flex-col items-center justify-center py-6 gap-2">
-          <button onclick="loadNextExploreBatchFromApi()" id="explore-load-more-btn" class="m3-state-layer h-11 px-8 rounded-full bg-md-primaryContainer text-md-onPrimaryContainer text-xs font-extrabold border border-md-primary/30">
+        <div id="explore-load-more-container" class="flex justify-center pt-4">
+          <button id="explore-load-more-btn" onclick="loadNextExploreBatchFromApi()" class="m3-state-layer h-11 px-8 rounded-full border border-md-outline bg-md-surfaceContainerLowest text-xs font-extrabold text-md-onSurface">
             さらにアニメ・漫画を読み込む
           </button>
-          <span id="explore-stream-status" class="text-[11px] font-medium text-md-onSurfaceVariant">下までスクロールするかボタンで新しい作品を読み込みます</span>
         </div>
       </div>
 
       <!-- ========================================== -->
-      <!-- VIEW 4: ライブラリ管理（一括編集） -->
+      <!-- VIEW 4: ライブラリ管理（常に自分のライブラリを管理） -->
       <!-- ========================================== -->
       <div id="view-library" class="hidden space-y-6 max-w-[1400px] mx-auto pb-12">
         <div class="p-6 rounded-[24px] bg-md-surfaceContainerLowest border border-md-outlineVariant space-y-4">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <span class="text-xs font-extrabold uppercase tracking-wider text-md-primary">MY LIBRARY MANAGEMENT</span>
-              <h2 class="text-2xl font-extrabold text-md-onSurface mt-0.5">マイライブラリ一括管理</h2>
-              <p class="text-xs text-md-onSurfaceVariant mt-1">
-                登録済み作品の「アニメ派 / 漫画派 / 両刀」「完走 / 途中まで / 1期・序盤」「語れる / 履修済 / 気になる」をまとめて管理できます。
+              <h1 class="text-2xl font-extrabold text-md-onSurface mt-0.5">マイライブラリ一括管理</h1>
+              <p id="library-target-account-label" class="text-xs font-bold text-md-onSurfaceVariant mt-1">
+                登録した作品の「アニメ派 / 漫画・原作派 / 両刀」や「完走 / 途中まで / 1期のみ」の進捗・メモを一覧で管理できます。
               </p>
             </div>
             <div class="flex items-center gap-2">
@@ -540,82 +538,78 @@
                 id="library-filter-input"
                 oninput="renderEditorGrid()"
                 placeholder="マイライブラリ内を検索..."
-                class="h-10 px-4 rounded-full bg-md-surfaceContainerLow border border-md-outlineVariant text-xs text-md-onSurface focus:outline-none focus:border-md-primary"
+                class="h-10 px-4 rounded-xl bg-md-surfaceContainerLow border border-md-outlineVariant text-xs text-md-onSurface w-64 focus:outline-none focus:border-md-primary"
               >
-              <select id="library-status-filter" onchange="renderEditorGrid()" class="h-10 px-3 rounded-xl bg-md-surfaceContainerLow border border-md-outlineVariant text-xs font-bold text-md-onSurface">
-                <option value="REGISTERED">登録済みすべて</option>
-                <option value="love">いつでも語れる</option>
-                <option value="watched">履修済み</option>
-                <option value="curious">気になってる</option>
-                <option value="INCOMPLETE">途中まで・未完走のみ</option>
-              </select>
             </div>
           </div>
         </div>
 
-        <div id="editor-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        <div id="library-editor-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3.5"></div>
       </div>
 
     </main>
   </div>
 
   <!-- ========================================== -->
-  <!-- MODAL 1: アカウント認証（ログイン・新規作成） -->
+  <!-- MODAL 1: アカウント認証（ログイン / 新規マイページ作成） -->
   <!-- ========================================== -->
   <div id="auth-modal" class="fixed inset-0 z-50 hidden bg-black/50 flex items-center justify-center p-4">
     <div class="bg-md-surfaceContainerHigh border border-md-outlineVariant rounded-[28px] max-w-md w-full p-6 space-y-5 shadow-xl">
       <div class="flex items-center justify-between">
-        <h3 class="font-extrabold text-lg text-md-onSurface">アカウント管理・ページ作成</h3>
-        <button onclick="closeAuthModal()" class="text-md-onSurfaceVariant text-sm font-bold">✕</button>
+        <h3 class="font-extrabold text-lg text-md-onSurface">アカウント管理・マイページ作成</h3>
+        <button onclick="closeAuthModal()" class="text-md-onSurfaceVariant text-sm font-bold px-2 py-1">✕</button>
       </div>
 
-      <!-- タブ切替 -->
-      <div class="grid grid-cols-2 rounded-full bg-md-surfaceContainer p-1">
-        <button onclick="switchAuthModalTab('login')" id="auth-tab-login" class="py-2 rounded-full text-xs font-extrabold bg-md-primary text-md-onPrimary">ログイン・切替</button>
-        <button onclick="switchAuthModalTab('register')" id="auth-tab-register" class="py-2 rounded-full text-xs font-extrabold text-md-onSurfaceVariant">新規マイページ作成</button>
-      </div>
-
-      <p id="auth-error-box" class="hidden p-3 rounded-xl bg-red-100 border border-red-400 text-red-900 text-xs font-bold"></p>
-
-      <!-- ログインフォーム -->
-      <div id="auth-panel-login" class="space-y-3.5">
-        <div>
-          <label class="text-xs font-bold text-md-onSurfaceVariant block mb-1">アカウントID (@handle)</label>
-          <input type="text" id="login-handle-input" placeholder="登録した半角英数IDを入力" class="w-full h-10 px-3.5 rounded-xl bg-md-surfaceContainerLowest border border-md-outline text-sm text-md-onSurface">
-        </div>
-        <div>
-          <label class="text-xs font-bold text-md-onSurfaceVariant block mb-1">編集用パスワード</label>
-          <input type="password" id="login-password-input" placeholder="パスワードを入力" onkeydown="if(event.key==='Enter') submitLoginAccount()" class="w-full h-10 px-3.5 rounded-xl bg-md-surfaceContainerLowest border border-md-outline text-sm text-md-onSurface">
-        </div>
-        <button onclick="submitLoginAccount()" class="w-full h-11 rounded-full bg-md-primary text-md-onPrimary text-xs font-extrabold">
-          認証してこのアカウントでログイン
+      <div class="grid grid-cols-2 p-1 rounded-full bg-md-surfaceContainerHighest">
+        <button id="auth-tab-login" onclick="switchAuthModalTab('login')" class="py-2 rounded-full text-xs font-extrabold bg-md-primary text-md-onPrimary">
+          ログイン・切替
         </button>
+        <button id="auth-tab-register" onclick="switchAuthModalTab('register')" class="py-2 rounded-full text-xs font-extrabold text-md-onSurfaceVariant">
+          ＋ 新規マイページ作成
+        </button>
+      </div>
 
-        <div class="pt-3 border-t border-md-outlineVariant space-y-2">
-          <span class="text-[11px] font-bold text-md-onSurfaceVariant block">登録済みアカウント一覧（クリックでID入力）</span>
-          <div id="auth-existing-accounts-list" class="space-y-1.5 max-h-40 overflow-y-auto"></div>
+      <div id="auth-error-box" class="hidden p-3 rounded-xl bg-red-100 border border-red-300 text-red-900 text-xs font-bold"></div>
+
+      <div id="auth-panel-login" class="space-y-4">
+        <div class="space-y-2">
+          <label class="text-xs font-bold text-md-onSurfaceVariant block">登録済みメンバー（閲覧は自由・編集にはパスワードが必要）</label>
+          <div id="auth-existing-accounts-list" class="space-y-1.5 max-h-36 overflow-y-auto"></div>
+        </div>
+
+        <div class="space-y-3 pt-2 border-t border-md-outlineVariant">
+          <div>
+            <label class="text-xs font-bold text-md-onSurfaceVariant block mb-1">アカウントID (@不要)</label>
+            <input type="text" id="login-handle-input" placeholder="例: sora_sf" class="w-full h-10 px-3.5 rounded-xl bg-md-surfaceContainerLowest border border-md-outline text-sm text-md-onSurface">
+          </div>
+          <div>
+            <label class="text-xs font-bold text-md-onSurfaceVariant block mb-1">編集用パスワード</label>
+            <input type="password" id="login-password-input" placeholder="設定したパスワードを入力" onkeydown="if(event.key==='Enter') submitLoginAccount()" class="w-full h-10 px-3.5 rounded-xl bg-md-surfaceContainerLowest border border-md-outline text-sm text-md-onSurface">
+          </div>
+          <button onclick="submitLoginAccount()" class="m3-state-layer w-full h-11 rounded-full bg-md-primary text-md-onPrimary text-xs font-extrabold">
+            パスワードを照合してログイン
+          </button>
         </div>
       </div>
 
-      <!-- 新規作成フォーム -->
       <div id="auth-panel-register" class="hidden space-y-3.5">
         <div>
           <label class="text-xs font-bold text-md-onSurfaceVariant block mb-1">表示名（ニックネーム）</label>
-          <input type="text" id="reg-name-input" placeholder="例: カイト" class="w-full h-10 px-3.5 rounded-xl bg-md-surfaceContainerLowest border border-md-outline text-sm text-md-onSurface">
+          <input type="text" id="reg-name-input" placeholder="例: カイト" maxlength="20" class="w-full h-10 px-3.5 rounded-xl bg-md-surfaceContainerLowest border border-md-outline text-sm text-md-onSurface">
         </div>
         <div>
-          <label class="text-xs font-bold text-md-onSurfaceVariant block mb-1">アカウントID（半角英数・アンダースコア）</label>
-          <input type="text" id="reg-handle-input" placeholder="例: kaito_anime" class="w-full h-10 px-3.5 rounded-xl bg-md-surfaceContainerLowest border border-md-outline text-sm text-md-onSurface">
+          <label class="text-xs font-bold text-md-onSurfaceVariant block mb-1">アカウントID（半角英数字・アンダースコア）</label>
+          <input type="text" id="reg-handle-input" placeholder="例: kaito_anime" maxlength="24" class="w-full h-10 px-3.5 rounded-xl bg-md-surfaceContainerLowest border border-md-outline text-sm text-md-onSurface">
         </div>
         <div>
-          <label class="text-xs font-bold text-md-onSurfaceVariant block mb-1">編集保護パスワード（4文字以上必須）</label>
-          <input type="password" id="reg-password-input" placeholder="4文字以上のパスワード" class="w-full h-10 px-3.5 rounded-xl bg-md-surfaceContainerLowest border border-md-outline text-sm text-md-onSurface">
+          <label class="text-xs font-bold text-md-onSurfaceVariant block mb-1">編集保護パスワード（4文字以上・必須）</label>
+          <input type="password" id="reg-password-input" placeholder="他人が編集できないよう保護します" class="w-full h-10 px-3.5 rounded-xl bg-md-surfaceContainerLowest border border-md-outline text-sm text-md-onSurface">
         </div>
         <div>
-          <label class="text-xs font-bold text-md-onSurfaceVariant block mb-1">自己紹介・好みの傾向</label>
-          <textarea id="reg-bio-input" rows="2" placeholder="好きなジャンルやアニメ派・漫画派などを自由に記入" class="w-full p-3 rounded-xl bg-md-surfaceContainerLowest border border-md-outline text-xs text-md-onSurface"></textarea>
+          <label class="text-xs font-bold text-md-onSurfaceVariant block mb-1">自己紹介・ひとこと</label>
+          <textarea id="reg-bio-input" rows="2" placeholder="好きなジャンルやよく見る作品など" class="w-full p-3 rounded-xl bg-md-surfaceContainerLowest border border-md-outline text-xs text-md-onSurface"></textarea>
         </div>
-        <button onclick="submitRegisterAccount()" class="w-full h-11 rounded-full bg-md-primary text-md-onPrimary text-xs font-extrabold">
+        <button onclick="submitRegisterAccount()" class="m3-state-layer w-full h-11 rounded-full bg-md-primary text-md-onPrimary text-xs font-extrabold">
           新規アカウント＆マイページを作成
         </button>
       </div>
@@ -623,56 +617,88 @@
   </div>
 
   <!-- ========================================== -->
-  <!-- MODAL 2: プロフィール編集モーダル -->
+  <!-- MODAL 2: プロフィール基本情報編集（オーナー専用） -->
   <!-- ========================================== -->
   <div id="profile-edit-modal" class="fixed inset-0 z-50 hidden bg-black/50 flex items-center justify-center p-4">
     <div class="bg-md-surfaceContainerHigh border border-md-outlineVariant rounded-[28px] max-w-md w-full p-6 space-y-4 shadow-xl">
       <div class="flex items-center justify-between">
-        <h3 class="font-extrabold text-base text-md-onSurface">マイプロフィールの編集</h3>
+        <h3 class="font-extrabold text-base text-md-onSurface">マイプロフィール情報の編集</h3>
         <button onclick="closeProfileEditModal()" class="text-md-onSurfaceVariant text-sm font-bold">✕</button>
       </div>
-      <div class="space-y-3">
-        <div>
-          <label class="text-xs font-bold text-md-onSurfaceVariant block mb-1">表示名</label>
-          <input type="text" id="edit-profile-name" class="w-full h-10 px-3.5 rounded-xl bg-md-surfaceContainerLowest border border-md-outline text-sm text-md-onSurface">
-        </div>
-        <div>
-          <label class="text-xs font-bold text-md-onSurfaceVariant block mb-1">自己紹介文</label>
-          <textarea id="edit-profile-bio" rows="3" class="w-full p-3 rounded-xl bg-md-surfaceContainerLowest border border-md-outline text-xs text-md-onSurface"></textarea>
-        </div>
+      <div>
+        <label class="text-xs font-bold text-md-onSurfaceVariant block mb-1">表示名</label>
+        <input type="text" id="edit-profile-name" maxlength="24" class="w-full h-10 px-3.5 rounded-xl bg-md-surfaceContainerLowest border border-md-outline text-sm text-md-onSurface">
+      </div>
+      <div>
+        <label class="text-xs font-bold text-md-onSurfaceVariant block mb-1">自己紹介・ひとこと</label>
+        <textarea id="edit-profile-bio" rows="3" maxlength="160" class="w-full p-3 rounded-xl bg-md-surfaceContainerLowest border border-md-outline text-xs text-md-onSurface"></textarea>
       </div>
       <div class="flex justify-end gap-2 pt-2">
         <button onclick="closeProfileEditModal()" class="h-10 px-4 rounded-full text-xs font-bold text-md-onSurfaceVariant">キャンセル</button>
-        <button onclick="saveProfileEdit()" class="h-10 px-6 rounded-full bg-md-primary text-md-onPrimary text-xs font-extrabold">保存する</button>
+        <button onclick="saveProfileEdit()" class="h-10 px-6 rounded-full bg-md-primary text-md-onPrimary text-xs font-bold">保存する</button>
       </div>
     </div>
   </div>
 
   <!-- ========================================== -->
-  <!-- MODAL 3: 共有・データコードモーダル -->
+  <!-- MODAL 3: 共有・コード入出力モーダル -->
   <!-- ========================================== -->
   <div id="share-modal" class="fixed inset-0 z-50 hidden bg-black/50 flex items-center justify-center p-4">
     <div class="bg-md-surfaceContainerHigh border border-md-outlineVariant rounded-[28px] max-w-lg w-full p-6 space-y-4 shadow-xl">
       <div class="flex items-center justify-between">
-        <h3 class="font-extrabold text-base text-md-onSurface">プロフィールの共有・読み込み</h3>
+        <h3 class="font-extrabold text-base text-md-onSurface">プロフィールの共有・データ読込</h3>
         <button onclick="closeShareModal()" class="text-md-onSurfaceVariant text-sm font-bold">✕</button>
       </div>
 
-      <div class="space-y-2">
-        <label class="text-xs font-bold text-md-onSurfaceVariant block">Discord / SNS 貼り付け用プロフィール要約＆ダイレクト共有URL</label>
-        <textarea id="share-summary-text" rows="4" readonly class="w-full p-3 rounded-xl bg-md-surfaceContainerLowest border border-md-outlineVariant text-xs text-md-onSurface"></textarea>
-        <div class="flex flex-wrap gap-2">
-          <button onclick="copyShareSummaryText()" class="h-9 px-4 rounded-full bg-md-primary text-md-onPrimary text-xs font-bold">紹介テキスト＋URLをコピー</button>
-          <button onclick="copyDirectShareUrlOnly()" class="h-9 px-4 rounded-full bg-md-primaryContainer text-md-onPrimaryContainer text-xs font-extrabold">データ付き共有URLだけコピー</button>
+      <div class="space-y-1.5">
+        <label class="text-xs font-bold text-md-onSurfaceVariant block">Discord・SNS貼り付け用 紹介テキスト＆直リンクURL</label>
+        <textarea id="share-summary-text" rows="4" readonly class="w-full p-3 rounded-xl bg-md-surfaceContainerLowest border border-md-outline text-xs text-md-onSurface"></textarea>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <button onclick="copyShareSummaryText()" class="m3-state-layer w-full h-9 rounded-xl bg-md-primary text-md-onPrimary text-xs font-bold">
+            紹介テキスト＋URLをコピー
+          </button>
+          <button onclick="copyDirectShareUrlOnly()" class="m3-state-layer w-full h-9 rounded-xl bg-md-secondaryContainer text-md-onSecondaryContainer text-xs font-bold">
+            プロフィールURLだけコピー
+          </button>
         </div>
       </div>
 
-      <div class="space-y-2 pt-3 border-t border-md-outlineVariant">
-        <label class="text-xs font-bold text-md-onSurfaceVariant block">他の人の共有コードを読み込む</label>
+      <div class="space-y-1.5 pt-2 border-t border-md-outlineVariant">
+        <label class="text-xs font-bold text-md-onSurfaceVariant block">プロフィール共有データコード（他の端末へ直接渡す場合）</label>
+        <div class="flex gap-2">
+          <input type="text" id="share-export-code" readonly class="flex-1 h-9 px-3 rounded-xl bg-md-surfaceContainerLowest border border-md-outline text-xs text-md-onSurface">
+          <button onclick="copyExportCode()" class="h-9 px-4 rounded-xl bg-md-secondaryContainer text-md-onSecondaryContainer text-xs font-bold">コードコピー</button>
+        </div>
+      </div>
+
+      <div class="space-y-1.5 pt-2 border-t border-md-outlineVariant">
+        <label class="text-xs font-bold text-md-onSurfaceVariant block">他の人の共有コードを読み込んで閲覧リストに追加</label>
         <div class="flex gap-2">
           <input type="text" id="share-import-code" placeholder="共有コードを貼り付け..." class="flex-1 h-9 px-3 rounded-xl bg-md-surfaceContainerLowest border border-md-outline text-xs text-md-onSurface">
-          <button onclick="applyImportCode()" class="h-9 px-4 rounded-full bg-md-primary text-md-onPrimary text-xs font-bold">読み込む</button>
+          <button onclick="applyImportCode()" class="h-9 px-4 rounded-xl bg-md-primary text-md-onPrimary text-xs font-bold">読み込む</button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL 4: プロフィール削除確認モーダル -->
+  <!-- ========================================== -->
+  <div id="delete-profile-modal" class="fixed inset-0 z-50 hidden bg-black/50 flex items-center justify-center p-4">
+    <div class="bg-md-surfaceContainerHigh border border-md-outlineVariant rounded-[28px] max-w-md w-full p-6 space-y-4 shadow-xl">
+      <div class="flex items-center justify-between">
+        <h3 class="font-extrabold text-base text-md-onSurface">プロフィールの削除</h3>
+        <button onclick="closeDeleteProfileModal()" class="text-md-onSurfaceVariant text-sm font-bold">✕</button>
+      </div>
+      <div class="p-3.5 rounded-2xl bg-md-surfaceContainerLowest border border-md-outlineVariant space-y-1.5">
+        <p id="delete-profile-target-label" class="text-sm font-extrabold text-md-onSurface"></p>
+        <p class="text-xs text-md-onSurfaceVariant leading-relaxed">
+          このプロフィールを一覧およびクラウド同期データから削除します。以前にローカルで作成した不要なテスト用プロフィールもここから完全に消去できます。
+        </p>
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button onclick="closeDeleteProfileModal()" class="h-10 px-4 rounded-full text-xs font-bold text-md-onSurfaceVariant">キャンセル</button>
+        <button onclick="confirmDeleteProfile()" class="h-10 px-6 rounded-full bg-red-700 text-white text-xs font-extrabold">削除を実行する</button>
       </div>
     </div>
   </div>
@@ -769,13 +795,16 @@
     const STORAGE_KEY_STATE = 'anicard_prod_state_v1';
     const STORAGE_KEY_SESSION = 'anicard_prod_session_v1';
     const STORAGE_KEY_COVERS = 'anicard_cover_cache_v8';
+    const STORAGE_KEY_DELETED = 'anicard_deleted_profiles_v1';
 
     let accounts = [];
     let profiles = [];
+    let deletedProfileIds = [];
     let loggedInAccountId = null;
     let activeProfileId = null;
     let highlightSharedWorksMode = false;
     let sidebarCollapsed = false;
+    let pendingDeleteProfileId = null;
 
     let currentTab = 'home';
     let homeFilterChip = 'ALL';
@@ -815,11 +844,24 @@
     function loadStateFromStorage() {
       loadCoverCache();
       try {
+        const rawDeleted = localStorage.getItem(STORAGE_KEY_DELETED);
+        if (rawDeleted) {
+          const parsedDel = JSON.parse(rawDeleted);
+          if (Array.isArray(parsedDel)) deletedProfileIds = parsedDel;
+        }
+      } catch (e) {
+        deletedProfileIds = [];
+      }
+      try {
         const raw = localStorage.getItem(STORAGE_KEY_STATE);
         if (raw) {
           const parsed = JSON.parse(raw);
-          if (Array.isArray(parsed.accounts)) accounts = parsed.accounts;
-          if (Array.isArray(parsed.profiles)) profiles = parsed.profiles;
+          if (Array.isArray(parsed.accounts)) {
+            accounts = parsed.accounts.filter(a => a && !deletedProfileIds.includes(a.id));
+          }
+          if (Array.isArray(parsed.profiles)) {
+            profiles = parsed.profiles.filter(p => p && !deletedProfileIds.includes(p.id));
+          }
         }
         const rawSession = localStorage.getItem(STORAGE_KEY_SESSION);
         if (rawSession) {
@@ -833,44 +875,42 @@
         }
       } catch (e) {}
 
-      // URLパラメータ ?share=... または ?user=... の処理
+      // URLパラメータ (?share=... または ?user=...) からの自動読み込み対応
       try {
         const params = new URLSearchParams(window.location.search);
-        const shareData = params.get('share');
-        if (shareData) {
-          const decoded = JSON.parse(decodeURIComponent(escape(atob(shareData))));
+        const shareParam = params.get('share');
+        const userParam = params.get('user');
+        if (shareParam) {
+          const decoded = JSON.parse(decodeURIComponent(escape(atob(shareParam))));
           if (decoded && decoded.name && Array.isArray(decoded.works)) {
-            const sharedId = decoded.id || `shared_${Date.now()}`;
-            let existing = profiles.find(p => p.id === sharedId);
-            if (!existing) {
-              existing = {
-                id: sharedId,
-                ownerAccountId: decoded.ownerAccountId || `shared_owner_${sharedId}`,
-                name: decoded.name,
-                handle: decoded.handle || `@${sharedId}`,
-                bio: decoded.bio || '',
-                works: decoded.works
-              };
-              profiles.push(existing);
-            } else if (existing.ownerAccountId !== loggedInAccountId) {
-              existing.name = decoded.name;
-              existing.bio = decoded.bio || '';
-              existing.works = decoded.works;
+            const importedId = decoded.id || `shared_${Date.now()}`;
+            if (!deletedProfileIds.includes(importedId)) {
+              let existingProf = profiles.find(p => p.id === importedId);
+              if (!existingProf) {
+                existingProf = {
+                  id: importedId,
+                  ownerAccountId: decoded.id || `shared_${importedId}`,
+                  name: decoded.name,
+                  handle: decoded.handle || `@${importedId}`,
+                  bio: decoded.bio || '',
+                  works: decoded.works
+                };
+                profiles.push(existingProf);
+              } else if (existingProf.ownerAccountId !== loggedInAccountId) {
+                existingProf.name = decoded.name;
+                existingProf.bio = decoded.bio || '';
+                existingProf.works = decoded.works;
+              }
+              activeProfileId = existingProf.id;
             }
-            activeProfileId = existing.id;
           }
-        } else {
-          const targetUser = params.get('user');
-          if (targetUser && profiles.some(p => p.id === targetUser)) {
-            activeProfileId = targetUser;
-          }
+        } else if (userParam && profiles.some(p => p.id === userParam)) {
+          activeProfileId = userParam;
         }
       } catch (e) {}
 
       if (!activeProfileId && profiles.length > 0) {
-        activeProfileId = loggedInAccountId && profiles.some(p => p.id === loggedInAccountId)
-          ? loggedInAccountId
-          : profiles[0].id;
+        activeProfileId = loggedInAccountId || profiles[0].id;
       }
       syncActiveProfileWorks();
     }
@@ -884,7 +924,7 @@
       } catch (e) {}
     }
 
-    function saveStateToStorage() {
+    function saveStateToStorage(immediateCloud = false) {
       try {
         const activeProf = profiles.find(p => p.id === activeProfileId);
         if (activeProf && activeProfileId === loggedInAccountId) {
@@ -902,9 +942,70 @@
         const myAcc = accounts.find(a => a.id === loggedInAccountId);
         const myProf = profiles.find(p => p.id === loggedInAccountId);
         if (myAcc && myProf) {
-          window.__pushProfileToCloud(myAcc, myProf);
+          window.__pushProfileToCloud(myAcc, myProf, immediateCloud);
         }
       }
+    }
+
+    function openDeleteProfileModal(profileId, event) {
+      if (event) event.stopPropagation();
+      const targetId = profileId || activeProfileId;
+      const prof = profiles.find(p => p.id === targetId);
+      if (!prof) return;
+      pendingDeleteProfileId = prof.id;
+      const labelEl = document.getElementById('delete-profile-target-label');
+      if (labelEl) {
+        labelEl.textContent = `${prof.name} (${prof.handle}) を削除しますか？`;
+      }
+      document.getElementById('delete-profile-modal').classList.remove('hidden');
+    }
+
+    function closeDeleteProfileModal() {
+      pendingDeleteProfileId = null;
+      document.getElementById('delete-profile-modal').classList.add('hidden');
+    }
+
+    function confirmDeleteProfile() {
+      if (!pendingDeleteProfileId) return;
+      const targetId = pendingDeleteProfileId;
+      const targetProf = profiles.find(p => p.id === targetId);
+      const targetName = targetProf ? targetProf.name : targetId;
+
+      if (!deletedProfileIds.includes(targetId)) {
+        deletedProfileIds.push(targetId);
+        try {
+          localStorage.setItem(STORAGE_KEY_DELETED, JSON.stringify(deletedProfileIds));
+        } catch (e) {}
+      }
+
+      profiles = profiles.filter(p => p.id !== targetId);
+      accounts = accounts.filter(a => a.id !== targetId && a.handle !== targetId);
+
+      if (loggedInAccountId === targetId) {
+        loggedInAccountId = accounts[0]?.id || null;
+      }
+      if (activeProfileId === targetId) {
+        activeProfileId = (loggedInAccountId && profiles.some(p => p.id === loggedInAccountId))
+          ? loggedInAccountId
+          : (profiles[0]?.id || null);
+      }
+
+      syncActiveProfileWorks();
+      try {
+        saveSessionOnly();
+        localStorage.setItem(STORAGE_KEY_STATE, JSON.stringify({ accounts, profiles }));
+      } catch (e) {}
+
+      if (typeof window.__deleteProfileFromCloud === 'function') {
+        window.__deleteProfileFromCloud(targetId);
+      }
+
+      closeDeleteProfileModal();
+      renderAll();
+      if (currentTab === 'seasonal') renderSeasonalMainGrid();
+      if (currentTab === 'edit') renderExploreStreamGrid();
+      if (currentTab === 'library') renderEditorGrid();
+      showToast(`プロフィール「${targetName}」を削除しました`);
     }
 
     function getActiveProfile() {
@@ -2342,262 +2443,263 @@
         const isMine = loggedInAccountId && p.ownerAccountId === loggedInAccountId;
         const count = (p.works || []).filter(w => w.status && w.status !== 'none').length;
         return `
-          <button
+          <div
             onclick="switchActiveProfile('${escapeHtmlAttr(p.id)}')"
-            class="w-full p-2.5 rounded-xl text-left flex items-center justify-between gap-2 border ${
+            class="w-full p-2.5 rounded-xl text-left flex items-center justify-between gap-2 border cursor-pointer ${
               isCurrent
                 ? 'bg-md-primaryContainer text-md-onPrimaryContainer border-md-primary font-extrabold'
                 : 'bg-md-surfaceContainerLowest text-md-onSurface border-md-outlineVariant/60 hover:bg-md-surfaceContainerHigh'
             }"
           >
-            <div class="min-w-0">
+            <div class="min-w-0 flex-1">
               <div class="flex items-center gap-1.5">
                 <span class="text-xs font-extrabold truncate">${escapeHtmlAttr(p.name)}</span>
                 ${isMine ? `<span class="text-[9px] font-extrabold px-1.5 py-0.2 rounded bg-md-primary text-md-onPrimary">自分</span>` : ''}
               </div>
               <p class="text-[10px] opacity-75 truncate">${escapeHtmlAttr(p.handle)}</p>
             </div>
-            <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-md-surfaceContainerLowest/80 text-md-onSurface shrink-0">${count}作</span>
-          </button>
+            <div class="flex items-center gap-1 shrink-0">
+              <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-md-surfaceContainerLowest/80 text-md-onSurface">${count}作</span>
+              <button
+                onclick="openDeleteProfileModal('${escapeHtmlAttr(p.id)}', event)"
+                title="このプロフィールを削除"
+                class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-red-50 text-red-800 border border-red-300 hover:bg-red-100"
+              >
+                削除
+              </button>
+            </div>
+          </div>
         `;
       }).join('');
     }
 
-    function renderSharedShowcaseSection(sharedList) {
+    function renderSharedWorksShowcase() {
       const showcase = document.getElementById('shared-works-showcase');
       const goldSection = document.getElementById('shared-gold-section');
       const goldGrid = document.getElementById('shared-gold-grid');
-      const standardSection = document.getElementById('shared-standard-section');
-      const grid = document.getElementById('shared-works-grid');
-      const viewedProfile = getActiveProfile();
-      const myProfile = getLoggedInProfile();
-      if (!showcase || !grid || !goldGrid) return;
+      const goldTitle = document.getElementById('shared-gold-title');
+      const stdSection = document.getElementById('shared-standard-section');
+      const stdGrid = document.getElementById('shared-works-grid');
+      const stdTitle = document.getElementById('shared-standard-title');
+      const titleEl = document.getElementById('shared-works-title');
+      const btn = document.getElementById('shared-highlight-btn');
 
-      if (!highlightSharedWorksMode || sharedList.length === 0 || viewedProfile.id === myProfile.id) {
-        showcase.classList.add('hidden');
-        return;
+      const editable = isCurrentProfileEditable();
+      if (editable) {
+        if (showcase) showcase.classList.add('hidden');
+        if (btn) btn.classList.add('hidden');
+        return new Map();
       }
 
+      const sharedList = computeSharedWorksWithLoggedInUser();
+      const sharedTierMap = new Map(sharedList.map(s => [s.theirWork.id, s.matchTier]));
+      const goldMatches = sharedList.filter(s => s.matchTier === 'double_gold' || s.matchTier === 'gold');
+      const standardMatches = sharedList.filter(s => s.matchTier === 'standard');
+
+      if (btn) {
+        btn.classList.remove('hidden');
+        btn.textContent = highlightSharedWorksMode
+          ? `ハイライト表示を解除（殿堂${goldMatches.length} / 履修${standardMatches.length}）`
+          : `自分と同じ履修作品をハイライト表示（殿堂${goldMatches.length} / 履修${standardMatches.length}）`;
+      }
+
+      if (!highlightSharedWorksMode) {
+        if (showcase) showcase.classList.add('hidden');
+        return sharedTierMap;
+      }
+
+      const prof = getActiveProfile();
+      if (!prof) return sharedTierMap;
       showcase.classList.remove('hidden');
+      titleEl.textContent = `${prof.name}さんとあなたの共通作品（全 ${sharedList.length} 作品）`;
 
-      const goldMatches = sharedList.filter(item => item.matchTier === 'double_gold' || item.matchTier === 'gold');
-      const standardMatches = sharedList.filter(item => item.matchTier === 'standard');
+      if (sharedList.length === 0) {
+        if (goldSection) goldSection.classList.add('hidden');
+        if (stdSection) stdSection.classList.remove('hidden');
+        stdGrid.innerHTML = `<div class="col-span-full p-6 rounded-xl bg-md-surfaceContainer text-center text-xs font-bold text-md-onSurfaceVariant">現在ログイン中のあなたのアカウントと共通して登録されている作品はまだありません。下の棚から作品をタップしてマイライブラリに追加してみましょう。</div>`;
+        return sharedTierMap;
+      }
 
-      document.getElementById('shared-works-title').textContent =
-        `${viewedProfile.name}さんとあなたの共通作品（全${sharedList.length}作：殿堂入り共通 ${goldMatches.length}作 ／ 履修共通 ${standardMatches.length}作）`;
+      if (goldMatches.length > 0) {
+        goldSection.classList.remove('hidden');
+        if (goldTitle) goldTitle.textContent = `殿堂入り（いつでも語れる）の共通作品 (${goldMatches.length}作品)`;
+        goldGrid.innerHTML = goldMatches.map(({ theirWork, myWork, matchTier }) => {
+          const theirVia = getConsumedViaMeta(ensureConsumedVia(theirWork));
+          const myVia = getConsumedViaMeta(ensureConsumedVia(myWork));
+          const theirProg = getProgressStateMeta(ensureProgressState(theirWork), theirWork.progressNote);
+          const myProg = getProgressStateMeta(ensureProgressState(myWork), myWork.progressNote);
+          const cover = getWorkDisplayImage(theirWork);
+          const fallback = makeFallbackPosterUrl(theirWork.title);
+          const badgeLabel = matchTier === 'double_gold' ? 'W殿堂入り一致 (お互いに殿堂入り)' : '殿堂入り共通';
 
-      const statusLabelMap = {
-        love: '殿堂入り',
-        watched: '履修済み',
-        curious: '気になってる'
-      };
-
-      // 1. 殿堂入り共通（ゴールドメダル仕様）
-    // 1. 殿堂入り共通（ゴールドメダル仕様・コンパクトサイズ）
-    if (goldMatches.length > 0) {
-      goldSection.classList.remove('hidden');
-      document.getElementById('shared-gold-title').textContent = `殿堂入り（いつでも語れる）の共通作品（${goldMatches.length}作品）`;
-      goldGrid.innerHTML = goldMatches.map(({ theirWork, myWork, matchTier }) => {
-        const theirVia = getConsumedViaMeta(ensureConsumedVia(theirWork));
-        const myVia = getConsumedViaMeta(ensureConsumedVia(myWork));
-        const theirProg = getProgressStateMeta(ensureProgressState(theirWork), theirWork.progressNote);
-        const myProg = getProgressStateMeta(ensureProgressState(myWork), myWork.progressNote);
-        const cover = getWorkDisplayImage(theirWork);
-        const fallback = makeFallbackPosterUrl(theirWork.title);
-        const badgeTitle = matchTier === 'double_gold' ? 'GOLD MEDAL • 2人とも殿堂入り' : 'GOLD MATCH • 殿堂入り共通';
-
-        return `
-          <div class="rounded-2xl p-3.5 flex gap-3.5 items-center gold-medal-card">
-            <img src="${cover}" alt="${escapeHtmlAttr(theirWork.title)}" onerror="this.src='${fallback}'" class="w-16 h-24 object-cover rounded-xl shrink-0 gold-medal-poster">
-            <div class="min-w-0 flex-1 space-y-1">
-              <span class="inline-block px-2 py-0.5 rounded-full gold-medal-badge text-[10px] font-extrabold tracking-wide">${badgeTitle}</span>
-              <h4 class="text-sm font-extrabold text-[#261900] line-clamp-2 leading-snug">${escapeHtmlAttr(theirWork.title)}</h4>
-              <div class="space-y-0.5 text-[11px]">
-                <p class="font-bold text-[#5C4300]">
-                  ${escapeHtmlAttr(viewedProfile.name)} [${statusLabelMap[theirWork.status] || '履修'}]:
-                  <span class="text-[#261900]">${theirVia.label}（${escapeHtmlAttr(theirProg.shortLabel)}）</span>
-                </p>
-                <p class="font-bold text-[#5C4300]">
-                  あなた [${statusLabelMap[myWork.status] || '履修'}]:
-                  <span class="text-[#8C6200] font-extrabold">${myVia.label}（${escapeHtmlAttr(myProg.shortLabel)}）</span>
-                </p>
+          return `
+            <div class="p-3 rounded-2xl gold-medal-card flex gap-3 items-center">
+              <img src="${cover}" alt="${escapeHtmlAttr(theirWork.title)}" onerror="this.src='${fallback}'" class="w-16 h-24 object-cover rounded-xl gold-medal-poster shrink-0">
+              <div class="min-w-0 flex-1 space-y-1">
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <span class="inline-block px-2 py-0.5 rounded text-[10px] font-extrabold gold-medal-badge">${badgeLabel}</span>
+                </div>
+                <h4 class="font-extrabold text-sm text-[#261900] line-clamp-1">${escapeHtmlAttr(theirWork.title)}</h4>
+                <div class="text-[11px] font-bold text-[#422C00] space-y-0.5">
+                  <p>${escapeHtmlAttr(prof.name)}: <span class="underline">${theirVia.label}</span> (${escapeHtmlAttr(theirProg.shortLabel)})</p>
+                  <p>あなた: <span class="underline">${myVia.label}</span> (${escapeHtmlAttr(myProg.shortLabel)})</p>
+                </div>
+                ${theirWork.comment ? `<p class="text-[11px] font-semibold text-[#5C3F00] bg-[#FFF4C2] px-2 py-1 rounded-lg line-clamp-1">「${escapeHtmlAttr(theirWork.comment)}」</p>` : ''}
               </div>
             </div>
-          </div>
-        `;
-      }).join('');
-    } else {
-      goldSection.classList.add('hidden');
-    }
+          `;
+        }).join('');
+      } else {
+        goldSection.classList.add('hidden');
+      }
 
-    // 2. 通常の履修共通（殿堂入りより大きいサイズ）
-    if (standardMatches.length > 0) {
-      standardSection.classList.remove('hidden');
-      document.getElementById('shared-standard-title').textContent = `履修済み・チェック済みの共通作品（${standardMatches.length}作品）`;
-      grid.innerHTML = standardMatches.map(({ theirWork, myWork }) => {
-        const theirVia = getConsumedViaMeta(ensureConsumedVia(theirWork));
-        const myVia = getConsumedViaMeta(ensureConsumedVia(myWork));
-        const theirProg = getProgressStateMeta(ensureProgressState(theirWork), theirWork.progressNote);
-        const myProg = getProgressStateMeta(ensureProgressState(myWork), myWork.progressNote);
-        const cover = getWorkDisplayImage(theirWork);
-        const fallback = makeFallbackPosterUrl(theirWork.title);
-        return `
-          <div class="rounded-2xl bg-md-surfaceContainerLowest border-2 border-md-primary p-4 flex gap-4 items-center">
-            <img src="${cover}" alt="${escapeHtmlAttr(theirWork.title)}" onerror="this.src='${fallback}'" class="w-24 h-36 object-cover rounded-xl border border-md-outlineVariant shrink-0">
-            <div class="min-w-0 flex-1 space-y-1.5">
-              <span class="inline-block px-2.5 py-0.5 rounded bg-md-primaryContainer text-md-onPrimaryContainer text-[10px] font-extrabold">履修共通</span>
-              <h4 class="text-base font-extrabold text-md-onSurface line-clamp-2 leading-snug">${escapeHtmlAttr(theirWork.title)}</h4>
-              <div class="space-y-1 text-[11px]">
-                <p class="font-bold text-md-onSurfaceVariant">${escapeHtmlAttr(viewedProfile.name)}: <span class="text-md-onSurface">${theirVia.label}（${escapeHtmlAttr(theirProg.shortLabel)}）</span></p>
-                <p class="font-bold text-md-onSurfaceVariant">あなた (${escapeHtmlAttr(myProfile.name)}): <span class="text-md-primary">${myVia.label}（${escapeHtmlAttr(myProg.shortLabel)}）</span></p>
+      if (standardMatches.length > 0) {
+        stdSection.classList.remove('hidden');
+        if (stdTitle) stdTitle.textContent = `履修済み・チェック済みの共通作品 (${standardMatches.length}作品)`;
+        stdGrid.innerHTML = standardMatches.map(({ theirWork, myWork }) => {
+          const theirVia = getConsumedViaMeta(ensureConsumedVia(theirWork));
+          const myVia = getConsumedViaMeta(ensureConsumedVia(myWork));
+          const theirProg = getProgressStateMeta(ensureProgressState(theirWork), theirWork.progressNote);
+          const myProg = getProgressStateMeta(ensureProgressState(myWork), myWork.progressNote);
+          const cover = getWorkDisplayImage(theirWork);
+          const fallback = makeFallbackPosterUrl(theirWork.title);
+          return `
+            <div class="p-4 rounded-2xl bg-md-primaryContainer/35 border-2 border-md-primary flex gap-4 items-center">
+              <img src="${cover}" alt="${escapeHtmlAttr(theirWork.title)}" onerror="this.src='${fallback}'" class="w-24 h-36 object-cover rounded-xl border-2 border-md-primary shrink-0">
+              <div class="min-w-0 flex-1 space-y-1.5">
+                <span class="inline-block px-2 py-0.5 rounded bg-md-primary text-md-onPrimary text-[10px] font-extrabold">共通履修</span>
+                <h4 class="font-extrabold text-base text-md-onSurface line-clamp-1">${escapeHtmlAttr(theirWork.title)}</h4>
+                <div class="text-xs font-bold text-md-onSurfaceVariant space-y-0.5">
+                  <p>${escapeHtmlAttr(prof.name)}: <span class="text-md-onSurface">${theirVia.label}</span> (${escapeHtmlAttr(theirProg.shortLabel)})</p>
+                  <p>あなた: <span class="text-md-onSurface">${myVia.label}</span> (${escapeHtmlAttr(myProg.shortLabel)})</p>
+                </div>
+                ${theirWork.comment ? `<p class="text-xs text-md-onSurface bg-md-surfaceContainerLowest px-2.5 py-1 rounded-lg line-clamp-1">「${escapeHtmlAttr(theirWork.comment)}」</p>` : ''}
               </div>
             </div>
-          </div>
-        `;
-      }).join('');
-    } else {
-      standardSection.classList.add('hidden');
-    }
-  }
+          `;
+        }).join('');
+      } else {
+        stdSection.classList.add('hidden');
+      }
 
-  function renderAll() {
+      return sharedTierMap;
+    }
+
+    function renderAll() {
       syncActiveProfileWorks();
       renderSidebarProfiles();
       updateNavCountersOnly();
 
       const prof = getActiveProfile();
-      const editable = isCurrentProfileEditable();
       const emptyBanner = document.getElementById('empty-onboarding-banner');
-      const headerCard = document.getElementById('profile-header-card');
-      const permPill = document.getElementById('header-permission-pill');
-      const ownerBadge = document.getElementById('profile-ownership-badge');
-      const editBtn = document.getElementById('edit-profile-btn');
-      const exploreBtn = document.getElementById('go-explore-btn');
-      const sharedBtn = document.getElementById('shared-highlight-btn');
-      const guideLabel = document.getElementById('interaction-guide-label');
+      const profileHeaderCard = document.getElementById('profile-header-card');
 
       if (!prof) {
         if (emptyBanner) emptyBanner.classList.remove('hidden');
-        if (headerCard) headerCard.classList.add('hidden');
-        document.getElementById('shared-works-showcase')?.classList.add('hidden');
-        permPill.textContent = '未登録・ゲスト';
-        permPill.className = 'px-3 py-1 rounded-full text-xs font-extrabold bg-md-secondaryContainer text-md-onSecondaryContainer';
-        ['shelf-love', 'shelf-curious', 'shelf-watched'].forEach(id => {
-          const el = document.getElementById(id);
-          if (el) el.innerHTML = `<div class="w-full py-8 px-4 rounded-2xl bg-md-surfaceContainerLowest border border-md-outlineVariant/60 text-center text-xs font-bold text-md-onSurfaceVariant">マイページを作成して作品を登録するとここに表示されます</div>`;
-        });
-        ['count-love', 'count-curious', 'count-watched'].forEach(id => {
-          const el = document.getElementById(id);
-          if (el) el.textContent = '0';
-        });
+        if (profileHeaderCard) profileHeaderCard.classList.add('hidden');
+        document.getElementById('header-permission-pill').textContent = '未ログイン（新規作成してください）';
+        document.getElementById('shelf-love').innerHTML = `<div class="p-6 rounded-2xl bg-md-surfaceContainerLowest border border-md-outlineVariant text-xs font-bold text-md-onSurfaceVariant">上の「＋ 新規マイページを作成する」からプロフィールを作成すると作品棚が表示されます</div>`;
+        document.getElementById('shelf-curious').innerHTML = '';
+        document.getElementById('shelf-watched').innerHTML = '';
         return;
       }
 
       if (emptyBanner) emptyBanner.classList.add('hidden');
-      if (headerCard) headerCard.classList.remove('hidden');
+      if (profileHeaderCard) profileHeaderCard.classList.remove('hidden');
+
+      const editable = isCurrentProfileEditable();
+      const myProf = getLoggedInProfile();
 
       document.getElementById('profile-display-name').textContent = prof.name;
       document.getElementById('profile-display-handle').textContent = prof.handle;
       document.getElementById('profile-display-bio').textContent = prof.bio || '';
 
-      const sharedList = computeSharedWorksWithLoggedInUser();
-      const sharedTierMap = new Map(sharedList.map(s => [s.theirWork.id, s.matchTier]));
-      const goldCount = sharedList.filter(s => s.matchTier === 'double_gold' || s.matchTier === 'gold').length;
+      const ownerBadge = document.getElementById('profile-ownership-badge');
+      const permPill = document.getElementById('header-permission-pill');
+      const editProfBtn = document.getElementById('edit-profile-btn');
+      const goExploreBtn = document.getElementById('go-explore-btn');
+      const guideLabel = document.getElementById('interaction-guide-label');
 
       if (editable) {
-        permPill.textContent = 'OWNER・編集可能';
-        permPill.className = 'px-3 py-1 rounded-full text-xs font-extrabold bg-md-primaryContainer text-md-onPrimaryContainer';
-        ownerBadge.textContent = 'あなたのマイページ（編集可能）';
+        ownerBadge.textContent = 'マイページ（編集可能）';
         ownerBadge.className = 'text-xs font-extrabold px-2.5 py-0.5 rounded-full bg-md-primaryContainer text-md-onPrimaryContainer';
-        editBtn.classList.remove('hidden');
-        exploreBtn.classList.remove('hidden');
-        sharedBtn.classList.add('hidden');
+        permPill.textContent = `ログイン中: ${prof.handle}`;
+        permPill.className = 'px-3 py-1 rounded-full text-xs font-extrabold bg-md-primaryContainer text-md-onPrimaryContainer';
+        editProfBtn.classList.remove('hidden');
+        goExploreBtn.classList.remove('hidden');
         if (guideLabel) guideLabel.textContent = 'バッジクリックで媒体・進捗（完走/途中まで）を切り替えられます';
       } else {
-        permPill.textContent = 'READ ONLY・閲覧専用';
-        permPill.className = 'px-3 py-1 rounded-full text-xs font-extrabold bg-md-secondaryContainer text-md-onSecondaryContainer';
-        ownerBadge.textContent = `${prof.name}さんの公開ページ（閲覧専用・タップでマイ追加）`;
+        ownerBadge.textContent = '閲覧モード（カードタップでマイライブラリに追加）';
         ownerBadge.className = 'text-xs font-extrabold px-2.5 py-0.5 rounded-full bg-md-secondaryContainer text-md-onSecondaryContainer';
-        editBtn.classList.add('hidden');
-        exploreBtn.classList.add('hidden');
-
-        if (loggedInAccountId && prof.id !== loggedInAccountId) {
-          sharedBtn.classList.remove('hidden');
-          sharedBtn.textContent = highlightSharedWorksMode
-            ? `共通作品のハイライトを解除（殿堂入り共通${goldCount}作 / 全${sharedList.length}作）`
-            : `自分と同じ履修作品を大きくハイライト表示（殿堂入り共通${goldCount}作 / 全${sharedList.length}作）`;
-        } else {
-          sharedBtn.classList.add('hidden');
-        }
-        if (guideLabel) guideLabel.textContent = '作品カードをタップすると自分のマイライブラリへ直接追加できます';
+        permPill.textContent = `${prof.name}さんを閲覧中`;
+        permPill.className = 'px-3 py-1 rounded-full text-xs font-extrabold bg-md-secondaryContainer text-md-onSecondaryContainer';
+        editProfBtn.classList.add('hidden');
+        goExploreBtn.classList.add('hidden');
+        if (guideLabel) guideLabel.textContent = '作品をタップすると自分のマイライブラリに直接追加できます';
       }
 
-      renderSharedShowcaseSection(sharedList);
+      const expLabel = document.getElementById('explore-target-account-label');
+      const libLabel = document.getElementById('library-target-account-label');
+      if (myProf) {
+        if (expLabel) expLabel.textContent = `選択した作品はあなたのプロフィール（${myProf.name} / ${myProf.handle}）に直接追加されます。`;
+        if (libLabel) libLabel.textContent = `${myProf.name} (${myProf.handle}) さんのマイライブラリを一括管理しています。`;
+      }
 
-      // 統計集計
-      const activeWorks = works.filter(w => w.status && w.status !== 'none');
-      let animeCnt = 0, mangaCnt = 0, bothCnt = 0, incompleteCnt = 0;
-      activeWorks.forEach(w => {
-        const via = ensureConsumedVia(w);
-        const prog = ensureProgressState(w);
-        if (via === 'anime') animeCnt++;
-        else if (via === 'manga') mangaCnt++;
-        else bothCnt++;
-        if (w.status !== 'curious' && (prog === 'partial' || prog === 'early')) incompleteCnt++;
-      });
+      const registered = works.filter(w => w.status && w.status !== 'none');
+      const animeCount = registered.filter(w => ensureConsumedVia(w) === 'anime').length;
+      const mangaCount = registered.filter(w => ensureConsumedVia(w) === 'manga').length;
+      const bothCount = registered.filter(w => ensureConsumedVia(w) === 'both').length;
+      const incompleteCount = registered.filter(w => {
+        const p = ensureProgressState(w);
+        return w.status !== 'curious' && (p === 'partial' || p === 'early');
+      }).length;
 
-      document.getElementById('stat-total-count').textContent = activeWorks.length;
-      document.getElementById('stat-anime-count').textContent = animeCnt;
-      document.getElementById('stat-manga-count').textContent = mangaCnt;
-      document.getElementById('stat-both-count').textContent = bothCnt;
-      document.getElementById('stat-incomplete-count').textContent = incompleteCnt;
+      document.getElementById('stat-total-count').textContent = `${registered.length}作品`;
+      document.getElementById('stat-anime-count').textContent = `${animeCount}作品`;
+      document.getElementById('stat-manga-count').textContent = `${mangaCount}作品`;
+      document.getElementById('stat-both-count').textContent = `${bothCount}作品`;
+      const incEl = document.getElementById('stat-incomplete-count');
+      if (incEl) incEl.textContent = `${incompleteCount}作品`;
 
-      // 3つの棚を描画
-      const shelves = [
-        { status: 'love', elId: 'shelf-love', countId: 'count-love', emptyText: '「いつでも語れる・殿堂入り」の作品がまだありません' },
-        { status: 'curious', elId: 'shelf-curious', countId: 'count-curious', emptyText: '「気になってる」作品がまだありません' },
-        { status: 'watched', elId: 'shelf-watched', countId: 'count-watched', emptyText: '「履修済み」の作品がまだありません' }
-      ];
+      const sharedTierMap = renderSharedWorksShowcase();
 
-      shelves.forEach(s => {
-        const list = works.filter(w => w.status === s.status && filterWorkByHomeChip(w));
-        const countEl = document.getElementById(s.countId);
-        if (countEl) countEl.textContent = list.length;
+      const loveItems = registered.filter(w => w.status === 'love' && filterWorkByHomeChip(w));
+      const curiousItems = registered.filter(w => w.status === 'curious' && filterWorkByHomeChip(w));
+      const watchedItems = registered.filter(w => w.status === 'watched' && filterWorkByHomeChip(w));
 
-        const container = document.getElementById(s.elId);
-        if (!container) return;
+      document.getElementById('count-love').textContent = loveItems.length;
+      document.getElementById('count-curious').textContent = curiousItems.length;
+      document.getElementById('count-watched').textContent = watchedItems.length;
 
-        if (list.length === 0) {
-          container.innerHTML = `<div class="w-full py-8 px-4 rounded-2xl bg-md-surfaceContainerLowest border border-md-outlineVariant/60 text-center text-xs font-bold text-md-onSurfaceVariant">${s.emptyText}</div>`;
-        } else {
-          container.innerHTML = list.map(w => buildYtmShelfCard(w, { matchTier: sharedTierMap.get(w.id) || null })).join('');
-        }
-      });
+      const emptyMsg = `<div class="p-6 rounded-2xl bg-md-surfaceContainerLowest border border-md-outlineVariant text-xs font-bold text-md-onSurfaceVariant">該当する作品がありません</div>`;
+
+      document.getElementById('shelf-love').innerHTML = loveItems.length
+        ? loveItems.map(w => buildYtmShelfCard(w, { matchTier: sharedTierMap.get(w.id) || null })).join('')
+        : emptyMsg;
+
+      document.getElementById('shelf-curious').innerHTML = curiousItems.length
+        ? curiousItems.map(w => buildYtmShelfCard(w, { matchTier: sharedTierMap.get(w.id) || null })).join('')
+        : emptyMsg;
+
+      document.getElementById('shelf-watched').innerHTML = watchedItems.length
+        ? watchedItems.map(w => buildYtmShelfCard(w, { matchTier: sharedTierMap.get(w.id) || null })).join('')
+        : emptyMsg;
     }
 
-    // ====================================================
-    // 10. ライブラリ一括管理グリッド (VIEW 4)
-    // ====================================================
     function renderEditorGrid() {
-      const grid = document.getElementById('editor-grid');
+      const grid = document.getElementById('library-editor-grid');
       if (!grid) return;
 
-      const targetWorks = getEditableWorksList();
+      const targetWorks = getEditableWorksList().filter(w => w.status && w.status !== 'none');
       const q = (document.getElementById('library-filter-input')?.value || '').trim().toLowerCase();
-      const statusFilter = document.getElementById('library-status-filter')?.value || 'REGISTERED';
 
       const filtered = targetWorks.filter(w => {
-        if (q && !w.title.toLowerCase().includes(q)) return false;
-        if (statusFilter === 'REGISTERED') return w.status && w.status !== 'none';
-        if (statusFilter === 'INCOMPLETE') {
-          const p = ensureProgressState(w);
-          return w.status && w.status !== 'none' && w.status !== 'curious' && (p === 'partial' || p === 'early');
-        }
-        return w.status === statusFilter;
+        if (!q) return true;
+        return w.title.toLowerCase().includes(q) || (w.comment || '').toLowerCase().includes(q) || (w.progressNote || '').toLowerCase().includes(q);
       });
 
       if (filtered.length === 0) {
-        grid.innerHTML = `<div class="col-span-full p-10 rounded-2xl bg-md-surfaceContainerLowest border border-md-outlineVariant text-center text-sm font-bold text-md-onSurfaceVariant">条件に一致する作品がありません</div>`;
+        grid.innerHTML = `<div class="col-span-full p-10 rounded-2xl bg-md-surfaceContainerLowest border border-md-outlineVariant text-center text-sm font-bold text-md-onSurfaceVariant">登録されている作品がありません。「探索・作品追加」から作品を追加してください。</div>`;
         return;
       }
 
@@ -2607,40 +2709,38 @@
         const progMeta = getProgressStateMeta(prog, w.progressNote);
         const cover = getWorkDisplayImage(w);
         const fallback = via === 'manga' ? makeFallbackMangaUrl(w.title) : makeFallbackPosterUrl(w.title);
+
         return `
-          <div class="rounded-2xl p-3.5 border flex flex-col justify-between bg-md-surfaceContainerLowest border-md-outlineVariant">
-            <div class="flex gap-3 mb-3">
-              <img src="${cover}" alt="" loading="lazy" onerror="this.src='${fallback}'" class="w-14 h-20 object-cover rounded-xl shrink-0 bg-md-surfaceContainerHigh border border-md-outlineVariant ${via === 'manga' ? 'comic-book-cover' : ''}">
-              <div class="min-w-0 flex-1">
-                <div class="flex items-center gap-1 flex-wrap">
-                  <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-md-surfaceContainerHigh text-md-onSurfaceVariant">${escapeHtmlAttr(w.genre)}</span>
-                  <span class="text-[10px] font-extrabold px-2 py-0.5 rounded border ${progMeta.pillClass}">${escapeHtmlAttr(progMeta.shortLabel)}</span>
+          <div class="p-3.5 rounded-2xl bg-md-surfaceContainerLowest border border-md-outlineVariant flex gap-3.5">
+            <img src="${cover}" alt="${escapeHtmlAttr(w.title)}" loading="lazy" onerror="this.src='${fallback}'" class="w-20 h-28 object-cover rounded-xl border border-md-outlineVariant shrink-0">
+            <div class="flex-1 min-w-0 flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between gap-2">
+                  <h4 class="font-extrabold text-sm text-md-onSurface truncate">${escapeHtmlAttr(w.title)}</h4>
+                  <button onclick="openCommentModal(${w.id}, event)" class="text-[11px] font-bold text-md-primary shrink-0 hover:underline">進捗・メモ編集</button>
                 </div>
-                <h4 class="font-bold text-xs text-md-onSurface truncate mt-1" title="${escapeHtmlAttr(w.title)}">${escapeHtmlAttr(w.title)}</h4>
-                <button onclick="openCommentModal(${w.id}, event)" class="mt-1.5 text-[11px] font-semibold text-md-primary hover:underline truncate block max-w-full text-left">
-                  ${w.comment || w.progressNote ? `進捗・メモ: ${escapeHtmlAttr(w.progressNote ? `[${w.progressNote}] ` : '')}${escapeHtmlAttr(w.comment || '')}` : '＋ 進捗詳細・一言メモを追加'}
-                </button>
-              </div>
-            </div>
-
-            <div class="space-y-1.5">
-              <div class="grid grid-cols-3 gap-1">
-                <button onclick="setWorkConsumedVia(${w.id}, 'anime')" class="py-1 rounded-md text-[10px] font-bold border ${via === 'anime' ? 'bg-md-primaryContainer text-md-onPrimaryContainer border-md-primary' : 'bg-md-surfaceContainerLow text-md-onSurfaceVariant border-md-outlineVariant'}">アニメ派</button>
-                <button onclick="setWorkConsumedVia(${w.id}, 'manga')" class="py-1 rounded-md text-[10px] font-bold border ${via === 'manga' ? 'bg-md-tertiaryContainer text-md-onTertiaryContainer border-md-tertiary' : 'bg-md-surfaceContainerLow text-md-onSurfaceVariant border-md-outlineVariant'}">漫画派</button>
-                <button onclick="setWorkConsumedVia(${w.id}, 'both')" class="py-1 rounded-md text-[10px] font-bold border ${via === 'both' ? 'bg-md-secondaryContainer text-md-onSecondaryContainer border-md-secondary' : 'bg-md-surfaceContainerLow text-md-onSurfaceVariant border-md-outlineVariant'}">両刀</button>
+                <p class="text-[11px] font-bold text-md-onSurfaceVariant mt-0.5 truncate">
+                  進捗: ${escapeHtmlAttr(progMeta.badgeLabel)} ${w.comment ? ` / 「${escapeHtmlAttr(w.comment)}」` : ''}
+                </p>
               </div>
 
-              <div class="grid grid-cols-3 gap-1">
-                <button onclick="setWorkProgressState(${w.id}, 'completed')" class="py-1 rounded-md text-[10px] font-bold border ${prog === 'completed' ? 'bg-teal-100 text-teal-950 border-teal-600' : 'bg-md-surfaceContainerLow text-md-onSurfaceVariant border-md-outlineVariant'}">完走済</button>
-                <button onclick="setWorkProgressState(${w.id}, 'partial')" class="py-1 rounded-md text-[10px] font-bold border ${prog === 'partial' ? 'bg-amber-100 text-amber-950 border-amber-500' : 'bg-md-surfaceContainerLow text-md-onSurfaceVariant border-md-outlineVariant'}">途中まで</button>
-                <button onclick="setWorkProgressState(${w.id}, 'early')" class="py-1 rounded-md text-[10px] font-bold border ${prog === 'early' ? 'bg-orange-100 text-orange-950 border-orange-500' : 'bg-md-surfaceContainerLow text-md-onSurfaceVariant border-md-outlineVariant'}">1期・序盤</button>
-              </div>
-
-              <div class="grid grid-cols-4 gap-1">
-                <button onclick="setWorkStatus(${w.id}, 'love')" class="py-1.5 rounded-lg text-[10px] font-bold border ${w.status === 'love' ? 'bg-md-primary text-md-onPrimary border-md-primary' : 'bg-md-surfaceContainerLow text-md-onSurfaceVariant border-md-outlineVariant'}">語れる</button>
-                <button onclick="setWorkStatus(${w.id}, 'watched')" class="py-1.5 rounded-lg text-[10px] font-bold border ${w.status === 'watched' ? 'bg-md-secondary text-md-onSecondary border-md-secondary' : 'bg-md-surfaceContainerLow text-md-onSurfaceVariant border-md-outlineVariant'}">履修済</button>
-                <button onclick="setWorkStatus(${w.id}, 'curious')" class="py-1.5 rounded-lg text-[10px] font-bold border ${w.status === 'curious' ? 'bg-md-tertiary text-md-onTertiary border-md-tertiary' : 'bg-md-surfaceContainerLow text-md-onSurfaceVariant border-md-outlineVariant'}">気になる</button>
-                <button onclick="setWorkStatus(${w.id}, 'none')" class="py-1.5 rounded-lg text-[10px] font-bold border ${w.status === 'none' ? 'bg-md-surfaceContainerHighest text-md-onSurface border-md-outline' : 'bg-md-surfaceContainerLow text-md-onSurfaceVariant border-md-outlineVariant'}">解除</button>
+              <div class="space-y-1.5 pt-2">
+                <div class="grid grid-cols-3 gap-1">
+                  <button onclick="setWorkConsumedVia(${w.id}, 'anime')" class="py-1 rounded text-[10px] font-bold border ${via === 'anime' ? 'bg-md-primaryContainer text-md-onPrimaryContainer border-md-primary' : 'bg-md-surfaceContainerLow text-md-onSurfaceVariant border-md-outlineVariant'}">アニメ派</button>
+                  <button onclick="setWorkConsumedVia(${w.id}, 'manga')" class="py-1 rounded text-[10px] font-bold border ${via === 'manga' ? 'bg-md-tertiaryContainer text-md-onTertiaryContainer border-md-tertiary' : 'bg-md-surfaceContainerLow text-md-onSurfaceVariant border-md-outlineVariant'}">漫画・原作派</button>
+                  <button onclick="setWorkConsumedVia(${w.id}, 'both')" class="py-1 rounded text-[10px] font-bold border ${via === 'both' ? 'bg-md-secondaryContainer text-md-onSecondaryContainer border-md-secondary' : 'bg-md-surfaceContainerLow text-md-onSurfaceVariant border-md-outlineVariant'}">両刀</button>
+                </div>
+                <div class="grid grid-cols-3 gap-1">
+                  <button onclick="setWorkProgressState(${w.id}, 'completed')" class="py-1 rounded text-[10px] font-bold border ${prog === 'completed' ? 'bg-teal-100 text-teal-950 border-teal-600' : 'bg-md-surfaceContainerLow text-md-onSurfaceVariant border-md-outlineVariant'}">完走済</button>
+                  <button onclick="setWorkProgressState(${w.id}, 'partial')" class="py-1 rounded text-[10px] font-bold border ${prog === 'partial' ? 'bg-amber-100 text-amber-950 border-amber-500' : 'bg-md-surfaceContainerLow text-md-onSurfaceVariant border-md-outlineVariant'}">途中まで</button>
+                  <button onclick="setWorkProgressState(${w.id}, 'early')" class="py-1 rounded text-[10px] font-bold border ${prog === 'early' ? 'bg-orange-100 text-orange-950 border-orange-500' : 'bg-md-surfaceContainerLow text-md-onSurfaceVariant border-md-outlineVariant'}">1期・序盤</button>
+                </div>
+                <div class="grid grid-cols-4 gap-1">
+                  <button onclick="setWorkStatus(${w.id}, 'love')" class="py-1 rounded text-[10px] font-extrabold border ${w.status === 'love' ? 'bg-md-primary text-md-onPrimary border-md-primary' : 'bg-md-surfaceContainerLow text-md-onSurface border-md-outlineVariant'}">語れる</button>
+                  <button onclick="setWorkStatus(${w.id}, 'watched')" class="py-1 rounded text-[10px] font-extrabold border ${w.status === 'watched' ? 'bg-md-secondary text-md-onSecondary border-md-secondary' : 'bg-md-surfaceContainerLow text-md-onSurface border-md-outlineVariant'}">見た</button>
+                  <button onclick="setWorkStatus(${w.id}, 'curious')" class="py-1 rounded text-[10px] font-extrabold border ${w.status === 'curious' ? 'bg-md-tertiary text-md-onTertiary border-md-tertiary' : 'bg-md-surfaceContainerLow text-md-onSurface border-md-outlineVariant'}">気になる</button>
+                  <button onclick="setWorkStatus(${w.id}, 'none')" class="py-1 rounded text-[10px] font-bold border bg-red-50 text-red-800 border-red-200">解除</button>
+                </div>
               </div>
             </div>
           </div>
@@ -2857,12 +2957,20 @@
         works: []
       };
 
+      // 過去に削除したIDと同名で再作成した場合は削除済みリストから解除
+      deletedProfileIds = deletedProfileIds.filter(id => id !== rawHandle);
+      try {
+        localStorage.setItem(STORAGE_KEY_DELETED, JSON.stringify(deletedProfileIds));
+      } catch (e) {}
+
+      accounts = accounts.filter(a => a.id !== rawHandle);
+      profiles = profiles.filter(p => p.id !== rawHandle);
       accounts.push(newAcc);
       profiles.push(newProf);
       loggedInAccountId = rawHandle;
       activeProfileId = rawHandle;
       syncActiveProfileWorks();
-      saveStateToStorage();
+      saveStateToStorage(true);
       closeAuthModal();
       renderAll();
       showToast(`新規アカウント @${rawHandle} を作成しました`);
@@ -2892,7 +3000,7 @@
         if (acc) acc.name = name;
       }
       prof.bio = bio;
-      saveStateToStorage();
+      saveStateToStorage(true);
       closeProfileEditModal();
       renderAll();
       showToast('プロフィール情報を更新しました');
@@ -3040,10 +3148,10 @@
   <!-- ==================================================== -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, deleteDoc, getDocs, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    // ご提示いただいた本番用 Firebase コンフィグ（GitHub Pages 等の外部公開時に自動使用されます）
+    // 本番用 Firebase コンフィグ（全端末で同じプロジェクト・コレクションを参照するよう固定）
     const userFirebaseConfig = {
       apiKey: "AIzaSyDR7QH6eNa4E--SN_wyDLSWLM4mexVJPbY",
       authDomain: "animanga-shere-73798.firebaseapp.com",
@@ -3059,112 +3167,201 @@
       indicator.textContent = text;
       indicator.className = isOnline
         ? 'px-3 py-1 rounded-full text-[11px] font-extrabold bg-teal-100 text-teal-950 border border-teal-500'
-        : 'px-3 py-1 rounded-full text-[11px] font-bold bg-md-surfaceContainerHigh text-md-onSurfaceVariant';
+        : 'px-3 py-1 rounded-full text-[11px] font-bold bg-amber-100 text-amber-950 border border-amber-400';
+    }
+
+    function sanitizeForFirestore(obj) {
+      return JSON.parse(JSON.stringify(obj));
     }
 
     async function initCloudSync() {
       try {
-        const hasEnvConfig = typeof __firebase_config !== 'undefined' && __firebase_config;
-        const firebaseConfig = hasEnvConfig ? JSON.parse(__firebase_config) : userFirebaseConfig;
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'animanga-shere-73798';
+        // どの環境（GitHub Pages / ローカル / プレビュー）から開いても必ず同じ animanga-shere-73798 データベースを共有する
+        const firebaseConfig = userFirebaseConfig;
+        const sharedAppId = 'animanga-shere-73798';
 
-        const app = initializeApp(firebaseConfig);
+        const app = initializeApp(firebaseConfig, 'anicard-shared-prod');
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        if (hasEnvConfig && typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-          await signInWithCustomToken(auth, __initial_auth_token);
-        } else {
+        // 匿名認証を試行（万一Firebaseコンソール側で匿名認証がOFFでFirestoreがテストモードの場合でも同期処理を継続する）
+        try {
           await signInAnonymously(auth);
+        } catch (authErr) {
+          console.warn('Anonymous auth skipped or disabled, continuing with direct Firestore access:', authErr);
         }
 
-        onAuthStateChanged(auth, (user) => {
-          if (!user) return;
-          setSyncStatus('クラウド同期中', true);
+        const profilesCol = collection(db, 'artifacts', sharedAppId, 'public', 'data', 'anicard_profiles');
 
-          const profilesCol = collection(db, 'artifacts', appId, 'public', 'data', 'anicard_profiles');
+        const applyRemoteDocsToState = (docsArray, removedIds = []) => {
+          const remoteAccounts = [];
+          const remoteProfiles = [];
 
-          // サーバー上の全員のプロフィールとアカウント情報をリアルタイム購読
-          onSnapshot(
-            profilesCol,
-            (snapshot) => {
-              const remoteAccounts = [];
-              const remoteProfiles = [];
+          docsArray.forEach((docSnap) => {
+            const data = docSnap.data();
+            const docId = docSnap.id;
+            if (!data) return;
 
-              snapshot.forEach((docSnap) => {
-                const data = docSnap.data();
-                if (data && data.profile && data.account) {
-                  remoteAccounts.push(data.account);
-                  remoteProfiles.push(data.profile);
-                }
-              });
+            const prof = data.profile || (data.name && Array.isArray(data.works) ? data : null);
+            if (!prof) return;
+            const pid = prof.id || docId;
 
-              // ローカルで作成済みのアカウント・プロフィールも消えないようにマージして保持
-              const mergedAccountsMap = new Map();
-              accounts.forEach(a => mergedAccountsMap.set(a.id, a));
-              remoteAccounts.forEach(a => mergedAccountsMap.set(a.id, a));
-              accounts = Array.from(mergedAccountsMap.values());
+            if (deletedProfileIds.includes(pid)) return;
 
-              const mergedProfilesMap = new Map();
-              profiles.forEach(p => mergedProfilesMap.set(p.id, p));
-              remoteProfiles.forEach(p => mergedProfilesMap.set(p.id, p));
-              profiles = Array.from(mergedProfilesMap.values());
+            const acc = data.account || {
+              id: pid,
+              handle: String(prof.handle || pid).replace(/^@/, ''),
+              passwordHash: '',
+              name: prof.name || pid
+            };
 
-              try {
-                localStorage.setItem(STORAGE_KEY_STATE, JSON.stringify({ accounts, profiles }));
-              } catch (e) {}
+            prof.id = pid;
+            remoteAccounts.push(acc);
+            remoteProfiles.push(prof);
+          });
 
-              const params = new URLSearchParams(window.location.search);
-              const urlUser = params.get('user');
-              if (urlUser && profiles.some(p => p.id === urlUser)) {
-                activeProfileId = urlUser;
-              } else if (!activeProfileId || !profiles.some(p => p.id === activeProfileId)) {
-                activeProfileId = (loggedInAccountId && profiles.some(p => p.id === loggedInAccountId))
-                  ? loggedInAccountId
-                  : (profiles[0]?.id || null);
-              }
+          // クラウド側で削除されたドキュメントがあればローカルからも除外
+          if (removedIds.length > 0) {
+            accounts = accounts.filter(a => !removedIds.includes(a.id));
+            profiles = profiles.filter(p => !removedIds.includes(p.id));
+          }
 
-              syncActiveProfileWorks();
-              renderAll();
-              if (currentTab === 'seasonal') renderSeasonalMainGrid();
-              if (currentTab === 'edit') renderExploreStreamGrid();
-              if (currentTab === 'library') renderEditorGrid();
-              if (works.length > 0) batchFetchCoversFromAniList(works);
-            },
-            (err) => {
-              console.error('Firestore sync error:', err);
-              setSyncStatus('ローカル保存モード', false);
+          // クラウド側の最新データを優先しつつマージ
+          const mergedAccountsMap = new Map();
+          accounts.forEach(a => {
+            if (a && !deletedProfileIds.includes(a.id)) mergedAccountsMap.set(a.id, a);
+          });
+          remoteAccounts.forEach(a => {
+            if (a && !deletedProfileIds.includes(a.id)) mergedAccountsMap.set(a.id, a);
+          });
+          accounts = Array.from(mergedAccountsMap.values());
+
+          const mergedProfilesMap = new Map();
+          profiles.forEach(p => {
+            if (p && !deletedProfileIds.includes(p.id)) mergedProfilesMap.set(p.id, p);
+          });
+          remoteProfiles.forEach(p => {
+            if (p && !deletedProfileIds.includes(p.id)) mergedProfilesMap.set(p.id, p);
+          });
+          profiles = Array.from(mergedProfilesMap.values());
+
+          try {
+            localStorage.setItem(STORAGE_KEY_STATE, JSON.stringify({ accounts, profiles }));
+          } catch (e) {}
+
+          const params = new URLSearchParams(window.location.search);
+          const urlUser = params.get('user');
+          if (urlUser && profiles.some(p => p.id === urlUser)) {
+            activeProfileId = urlUser;
+          } else if (!activeProfileId || !profiles.some(p => p.id === activeProfileId)) {
+            activeProfileId = (loggedInAccountId && profiles.some(p => p.id === loggedInAccountId))
+              ? loggedInAccountId
+              : (profiles[0]?.id || null);
+          }
+
+          syncActiveProfileWorks();
+          renderAll();
+          if (currentTab === 'seasonal') renderSeasonalMainGrid();
+          if (currentTab === 'edit') renderExploreStreamGrid();
+          if (currentTab === 'library') renderEditorGrid();
+          if (works.length > 0) batchFetchCoversFromAniList(works);
+          setSyncStatus(`クラウド同期中 (${profiles.length}人)`, true);
+        };
+
+        // 自分のプロフィール変更をクラウドへ保存する関数
+        let cloudSaveTimer = null;
+        window.__pushProfileToCloud = (accountObj, profileObj, immediate = false) => {
+          if (!accountObj || !profileObj) return;
+          const execPush = async () => {
+            try {
+              const ref = doc(db, 'artifacts', sharedAppId, 'public', 'data', 'anicard_profiles', profileObj.id);
+              await setDoc(ref, sanitizeForFirestore({
+                account: accountObj,
+                profile: profileObj,
+                updatedAt: Date.now()
+              }));
+              setSyncStatus(`クラウド同期中 (${profiles.length}人)`, true);
+            } catch (e) {
+              console.error('Cloud save failed:', e);
+              setSyncStatus('同期エラー(ルール確認)', false);
             }
-          );
-
-          // 自分のプロフィール変更をクラウドへ保存する関数（連続クリック時の無料枠消費を抑える600msデバウンス付き）
-          let cloudSaveTimer = null;
-          window.__pushProfileToCloud = (accountObj, profileObj) => {
-            if (!auth.currentUser || !accountObj || !profileObj) return;
-            clearTimeout(cloudSaveTimer);
-            cloudSaveTimer = setTimeout(async () => {
-              try {
-                const ref = doc(db, 'artifacts', appId, 'public', 'data', 'anicard_profiles', profileObj.id);
-                await setDoc(ref, {
-                  account: accountObj,
-                  profile: profileObj,
-                  updatedAt: Date.now()
-                });
-              } catch (e) {
-                console.error('Cloud save failed:', e);
-              }
-            }, 600);
           };
 
-          // 初回接続時にローカルで作成済みの自分のマイページがあればクラウドへ同期
-          if (loggedInAccountId) {
-            const myAcc = accounts.find(a => a.id === loggedInAccountId);
-            const myProf = profiles.find(p => p.id === loggedInAccountId);
-            if (myAcc && myProf) {
-              window.__pushProfileToCloud(myAcc, myProf);
-            }
+          clearTimeout(cloudSaveTimer);
+          if (immediate) {
+            execPush();
+          } else {
+            cloudSaveTimer = setTimeout(execPush, 450);
           }
-        });
+        };
+
+        // プロフィール削除時にクラウド側ドキュメントも削除する関数
+        window.__deleteProfileFromCloud = async (profileId) => {
+          if (!profileId) return;
+          try {
+            const ref = doc(db, 'artifacts', sharedAppId, 'public', 'data', 'anicard_profiles', profileId);
+            await deleteDoc(ref);
+          } catch (e) {
+            console.error('Cloud delete failed:', e);
+          }
+        };
+
+        // 手動でクラウドから全メンバーを再取得＆自分のプロフィールを送信する関数
+        window.__manualCloudSync = async () => {
+          try {
+            setSyncStatus('同期通信中...', true);
+            if (loggedInAccountId) {
+              const myAcc = accounts.find(a => a.id === loggedInAccountId);
+              const myProf = profiles.find(p => p.id === loggedInAccountId);
+              if (myAcc && myProf) {
+                await window.__pushProfileToCloud(myAcc, myProf, true);
+              }
+            }
+            const snap = await getDocs(profilesCol);
+            const docs = [];
+            snap.forEach(d => docs.push(d));
+            applyRemoteDocsToState(docs, []);
+            showToast(`クラウドから全メンバー情報（${profiles.length}人）を同期しました`);
+          } catch (e) {
+            console.error('Manual cloud sync error:', e);
+            setSyncStatus('同期エラー(ルール確認)', false);
+            showToast('クラウド同期に失敗しました。Firebaseのルール設定を確認してください');
+          }
+        };
+
+        // サーバー上の全員のプロフィールとアカウント情報をリアルタイム購読
+        let initialUploadDone = false;
+        onSnapshot(
+          profilesCol,
+          (snapshot) => {
+            const removedIds = [];
+            snapshot.docChanges().forEach(change => {
+              if (change.type === 'removed') {
+                removedIds.push(change.doc.id);
+              }
+            });
+
+            const docs = [];
+            snapshot.forEach(d => docs.push(d));
+            applyRemoteDocsToState(docs, removedIds);
+
+            // 初回購読完了時、ローカルにある自分のプロフィールをクラウドへ確実にアップロード
+            if (!initialUploadDone) {
+              initialUploadDone = true;
+              if (loggedInAccountId) {
+                const myAcc = accounts.find(a => a.id === loggedInAccountId);
+                const myProf = profiles.find(p => p.id === loggedInAccountId);
+                if (myAcc && myProf && !deletedProfileIds.includes(myProf.id)) {
+                  window.__pushProfileToCloud(myAcc, myProf, true);
+                }
+              }
+            }
+          },
+          (err) => {
+            console.error('Firestore sync error:', err);
+            setSyncStatus('ローカル保存モード', false);
+          }
+        );
       } catch (e) {
         console.error('Cloud init skipped:', e);
         setSyncStatus('ローカル保存モード', false);
