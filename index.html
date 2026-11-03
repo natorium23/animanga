@@ -768,7 +768,7 @@
     // ====================================================
     const STORAGE_KEY_STATE = 'anicard_prod_state_v1';
     const STORAGE_KEY_SESSION = 'anicard_prod_session_v1';
-    const STORAGE_KEY_COVERS = 'anicard_cover_cache_v7';
+    const STORAGE_KEY_COVERS = 'anicard_cover_cache_v8';
 
     let accounts = [];
     let profiles = [];
@@ -1039,21 +1039,33 @@
     // ====================================================
     // 4. AniList GraphQL API によるアニメ＆漫画カバー取得（タイトル厳密照合）
     // ====================================================
+    const pendingCoverLookups = new Set();
+
     function normalizeTitleKey(title) {
-      return String(title || '').replace(/[\s　・―\-!！?？:：]/g, '').toLowerCase();
+      return String(title || '').replace(/[\s　・―\-!！?？:：〜~]/g, '').toLowerCase();
     }
 
     function getWorkDisplayImage(w) {
       const via = ensureConsumedVia(w);
       const tKey = normalizeTitleKey(w.title);
       const cacheEntry = coverCache[tKey] || coverCache[w.id];
+
       if (via === 'manga') {
         if (w.mangaImageUrl) return w.mangaImageUrl;
         if (cacheEntry && cacheEntry.manga) return cacheEntry.manga;
+        queueSingleCoverLookup(w, 'MANGA');
+        if (w.media === '漫画' && w.imageUrl) return w.imageUrl;
+        if (cacheEntry && cacheEntry.anime) return cacheEntry.anime;
+        return w.imageUrl || makeFallbackMangaUrl(w.title);
       }
+
+      // アニメ派 または 両刀 の場合はアニメ版のキービジュアルを最優先
+      if (w.animeImageUrl) return w.animeImageUrl;
       if (cacheEntry && cacheEntry.anime) return cacheEntry.anime;
-      if (w.imageUrl) return w.imageUrl;
-      return via === 'manga' ? makeFallbackMangaUrl(w.title) : makeFallbackPosterUrl(w.title);
+      queueSingleCoverLookup(w, 'ANIME');
+      if (w.media !== '漫画' && w.imageUrl) return w.imageUrl;
+      if (cacheEntry && cacheEntry.manga) return cacheEntry.manga;
+      return w.imageUrl || makeFallbackPosterUrl(w.title);
     }
 
     async function batchFetchCoversFromAniList(itemsList) {
@@ -1061,7 +1073,11 @@
       itemsList.forEach(item => {
         if (!item || !item.title) return;
         const tKey = normalizeTitleKey(item.title);
-        if (coverCache[tKey] && coverCache[tKey].anime) return;
+        const via = ensureConsumedVia(item);
+        const cached = coverCache[tKey];
+        const needsAnime = (via === 'anime' || via === 'both') && (!cached || !cached.anime);
+        const needsManga = via === 'manga' && (!cached || !cached.manga);
+        if (!needsAnime && !needsManga && cached && (cached.anime || cached.manga)) return;
         if (!targets.some(t => normalizeTitleKey(t.title) === tKey)) {
           targets.push(item);
         }
@@ -1069,7 +1085,7 @@
 
       if (targets.length === 0) return;
 
-      // 1リクエストあたり最大12作品ずつ、タイトル検索エイリアスでアニメ版と漫画版の表紙を正確に取得
+      // 1リクエストあたり最大12作品ずつ、アニメ版と漫画版の表紙を別々に厳密取得
       const chunk = targets.slice(0, 12);
       const queryParts = [];
       const variables = {};
@@ -1078,12 +1094,12 @@
         const cleanSearch = String(item.searchTitle || item.title).replace(/Season\s*\d+|第\d+期/gi, '').trim();
         variables[`s${idx}`] = cleanSearch;
         queryParts.push(`
-          anime_${idx}: Media(search: $s${idx}, type: ANIME, sort: SEARCH_MATCH, isAdult: false) {
+          anime_${idx}: Media(search: $s${idx}, type: ANIME, sort: POPULARITY_DESC, isAdult: false) {
             id
             title { native romaji }
             coverImage { large }
           }
-          manga_${idx}: Media(search: $s${idx}, type: MANGA, sort: SEARCH_MATCH, isAdult: false) {
+          manga_${idx}: Media(search: $s${idx}, type: MANGA, sort: POPULARITY_DESC, isAdult: false) {
             id
             title { native romaji }
             coverImage { large }
@@ -1107,19 +1123,22 @@
         chunk.forEach((item, idx) => {
           const animeNode = data[`anime_${idx}`];
           const mangaNode = data[`manga_${idx}`];
-          const animeCover = animeNode?.coverImage?.large || item.imageUrl || '';
-          const mangaCover = mangaNode?.coverImage?.large || animeCover || '';
           const tKey = normalizeTitleKey(item.title);
+          const prev = coverCache[tKey] || {};
+
+          const animeCover = animeNode?.coverImage?.large || prev.anime || (item.media !== '漫画' ? item.imageUrl : '') || '';
+          const mangaCover = mangaNode?.coverImage?.large || prev.manga || (item.media === '漫画' ? item.imageUrl : '') || '';
 
           if (animeCover || mangaCover) {
             const entry = {
-              anime: animeCover || mangaCover,
-              manga: mangaCover || animeCover
+              anime: animeCover,
+              manga: mangaCover
             };
             coverCache[tKey] = entry;
             if (item.id) coverCache[item.id] = entry;
-            item.imageUrl = entry.anime;
-            item.mangaImageUrl = entry.manga;
+            if (animeCover) item.animeImageUrl = animeCover;
+            if (mangaCover) item.mangaImageUrl = mangaCover;
+            if (!item.imageUrl) item.imageUrl = animeCover || mangaCover;
           }
         });
 
@@ -1131,18 +1150,28 @@
       } catch (e) {}
     }
 
-    async function queueSingleMangaCoverLookup(w) {
+    async function queueSingleCoverLookup(w, targetType = 'ANIME') {
       if (!w || !w.title) return;
       const tKey = normalizeTitleKey(w.title);
-      const cached = coverCache[tKey] || coverCache[w.id];
-      if (cached && cached.manga && cached.manga !== cached.anime) return;
+      const lookupKey = `${tKey}_${targetType}`;
+      if (pendingCoverLookups.has(lookupKey)) return;
+
+      const cached = coverCache[tKey] || coverCache[w.id] || {};
+      if (targetType === 'ANIME' && cached.anime) return;
+      if (targetType === 'MANGA' && cached.manga) return;
 
       const cleanTitle = String(w.searchTitle || w.title || '').replace(/Season\s*\d+|第\d+期/gi, '').trim();
       if (!cleanTitle) return;
 
+      pendingCoverLookups.add(lookupKey);
+
       const query = `
         query ($search: String) {
-          Media(search: $search, type: MANGA, sort: SEARCH_MATCH, isAdult: false) {
+          animeMedia: Media(search: $search, type: ANIME, sort: POPULARITY_DESC, isAdult: false) {
+            id
+            coverImage { large }
+          }
+          mangaMedia: Media(search: $search, type: MANGA, sort: POPULARITY_DESC, isAdult: false) {
             id
             coverImage { large }
           }
@@ -1157,19 +1186,31 @@
         });
         if (!res.ok) return;
         const json = await res.json();
-        const mangaCover = json?.data?.Media?.coverImage?.large;
-        if (mangaCover) {
-          w.mangaImageUrl = mangaCover;
-          const animeCover = w.imageUrl || cached?.anime || mangaCover;
-          const entry = { anime: animeCover, manga: mangaCover };
+        const animeCover = json?.data?.animeMedia?.coverImage?.large || cached.anime || '';
+        const mangaCover = json?.data?.mangaMedia?.coverImage?.large || cached.manga || '';
+
+        if (animeCover || mangaCover) {
+          const entry = {
+            anime: animeCover,
+            manga: mangaCover
+          };
           coverCache[tKey] = entry;
           if (w.id) coverCache[w.id] = entry;
+          if (animeCover) w.animeImageUrl = animeCover;
+          if (mangaCover) w.mangaImageUrl = mangaCover;
           saveCoverCache();
           renderAll();
           if (currentTab === 'edit') updateSingleExploreCardDom(w.id);
           if (currentTab === 'library') renderEditorGrid();
         }
-      } catch (e) {}
+      } catch (e) {
+      } finally {
+        pendingCoverLookups.delete(lookupKey);
+      }
+    }
+
+    function queueSingleMangaCoverLookup(w) {
+      return queueSingleCoverLookup(w, 'MANGA');
     }
 
     // ====================================================
@@ -1284,7 +1325,11 @@
       const current = ensureConsumedVia(w);
       const next = order[(order.indexOf(current) + 1) % order.length];
       w.consumedVia = next;
-      if (next === 'manga') queueSingleMangaCoverLookup(w);
+      if (next === 'manga') {
+        queueSingleCoverLookup(w, 'MANGA');
+      } else {
+        queueSingleCoverLookup(w, 'ANIME');
+      }
       saveStateToStorage();
       renderAll();
       const meta = getConsumedViaMeta(next);
@@ -1521,7 +1566,7 @@
               const cover = m.coverImage?.large || '';
               const tKey = normalizeTitleKey(title);
               if (cover) {
-                const entry = { anime: cover, manga: coverCache[tKey]?.manga || cover };
+                const entry = { anime: cover, manga: coverCache[tKey]?.manga || '' };
                 coverCache[tKey] = entry;
                 coverCache[m.id] = entry;
               }
@@ -1531,7 +1576,8 @@
                 title,
                 genre: mapAnilistGenresToJp(m.genres),
                 sub: m.studios?.nodes?.[0]?.name || `${seasonYear}年${seasonJpMap[season] || ''}アニメ`,
-                imageUrl: cover
+                imageUrl: cover,
+                animeImageUrl: cover
               };
             });
             saveCoverCache();
@@ -1793,8 +1839,8 @@
             const tKey = normalizeTitleKey(title);
             if (cover) {
               const entry = {
-                anime: m.type === 'ANIME' ? cover : (coverCache[tKey]?.anime || cover),
-                manga: m.type === 'MANGA' ? cover : (coverCache[tKey]?.manga || cover)
+                anime: m.type === 'ANIME' ? cover : (coverCache[tKey]?.anime || ''),
+                manga: m.type === 'MANGA' ? cover : (coverCache[tKey]?.manga || '')
               };
               coverCache[tKey] = entry;
               coverCache[m.id] = entry;
@@ -1811,7 +1857,9 @@
               status: 'none',
               comment: '',
               sub: m.type === 'MANGA' ? '漫画・コミックス' : 'TVアニメ・劇場版',
-              imageUrl: cover
+              imageUrl: cover,
+              animeImageUrl: m.type === 'ANIME' ? cover : (coverCache[tKey]?.anime || ''),
+              mangaImageUrl: m.type === 'MANGA' ? cover : (coverCache[tKey]?.manga || '')
             };
           });
           saveCoverCache();
@@ -1914,8 +1962,8 @@
           const tKey = normalizeTitleKey(title);
           if (cover) {
             const entry = {
-              anime: m.type === 'ANIME' ? cover : (coverCache[tKey]?.anime || cover),
-              manga: m.type === 'MANGA' ? cover : (coverCache[tKey]?.manga || cover)
+              anime: m.type === 'ANIME' ? cover : (coverCache[tKey]?.anime || ''),
+              manga: m.type === 'MANGA' ? cover : (coverCache[tKey]?.manga || '')
             };
             coverCache[tKey] = entry;
             coverCache[m.id] = entry;
@@ -1932,7 +1980,9 @@
             status: 'none',
             comment: '',
             sub: m.type === 'MANGA' ? '漫画・単行本' : 'アニメ作品',
-            imageUrl: cover
+            imageUrl: cover,
+            animeImageUrl: m.type === 'ANIME' ? cover : (coverCache[tKey]?.anime || ''),
+            mangaImageUrl: m.type === 'MANGA' ? cover : (coverCache[tKey]?.manga || '')
           });
         });
         saveCoverCache();
@@ -2059,15 +2109,16 @@
 
     function setExploreItemVia(workId, viaType) {
       const streamItem = exploreStreamItems.find(i => i.id === workId);
-      if (streamItem) streamItem.consumedVia = viaType;
+      if (streamItem) {
+        streamItem.consumedVia = viaType;
+        queueSingleCoverLookup(streamItem, viaType === 'manga' ? 'MANGA' : 'ANIME');
+      }
       const targetWorks = getEditableWorksList();
       const existing = targetWorks.find(w => w.id === workId);
       if (existing) {
         existing.consumedVia = viaType;
-        if (viaType === 'manga') queueSingleMangaCoverLookup(existing);
+        queueSingleCoverLookup(existing, viaType === 'manga' ? 'MANGA' : 'ANIME');
         saveStateToStorage();
-      } else if (streamItem && viaType === 'manga') {
-        queueSingleMangaCoverLookup(streamItem);
       }
       updateSingleExploreCardDom(workId);
       updateNavCountersOnly();
@@ -2110,9 +2161,7 @@
       }
       ensureConsumedVia(existing);
       ensureProgressState(existing);
-      if (existing.consumedVia === 'manga') {
-        queueSingleMangaCoverLookup(existing);
-      }
+      queueSingleCoverLookup(existing, existing.consumedVia === 'manga' ? 'MANGA' : 'ANIME');
 
       if (activeProfileId === loggedInAccountId) {
         works = targetWorks;
@@ -2615,7 +2664,7 @@
       const w = targetWorks.find(item => item.id === id);
       if (!w) return;
       w.consumedVia = via;
-      if (via === 'manga') queueSingleMangaCoverLookup(w);
+      queueSingleCoverLookup(w, via === 'manga' ? 'MANGA' : 'ANIME');
       if (activeProfileId === loggedInAccountId) works = targetWorks;
       saveStateToStorage();
       renderEditorGrid();
@@ -3084,23 +3133,27 @@
             },
             (err) => {
               console.error('Firestore sync error:', err);
-              setSyncStatus('ローカル保存モード（権限要確認）', false);
+              setSyncStatus('ローカル保存モード', false);
             }
           );
 
-          // 自分のプロフィール変更をクラウドへ即時保存する関数を公開
-          window.__pushProfileToCloud = async (accountObj, profileObj) => {
+          // 自分のプロフィール変更をクラウドへ保存する関数（連続クリック時の無料枠消費を抑える600msデバウンス付き）
+          let cloudSaveTimer = null;
+          window.__pushProfileToCloud = (accountObj, profileObj) => {
             if (!auth.currentUser || !accountObj || !profileObj) return;
-            try {
-              const ref = doc(db, 'artifacts', appId, 'public', 'data', 'anicard_profiles', profileObj.id);
-              await setDoc(ref, {
-                account: accountObj,
-                profile: profileObj,
-                updatedAt: Date.now()
-              });
-            } catch (e) {
-              console.error('Cloud save failed:', e);
-            }
+            clearTimeout(cloudSaveTimer);
+            cloudSaveTimer = setTimeout(async () => {
+              try {
+                const ref = doc(db, 'artifacts', appId, 'public', 'data', 'anicard_profiles', profileObj.id);
+                await setDoc(ref, {
+                  account: accountObj,
+                  profile: profileObj,
+                  updatedAt: Date.now()
+                });
+              } catch (e) {
+                console.error('Cloud save failed:', e);
+              }
+            }, 600);
           };
 
           // 初回接続時にローカルで作成済みの自分のマイページがあればクラウドへ同期
