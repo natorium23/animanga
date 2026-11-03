@@ -2870,18 +2870,20 @@
         works: (prof.works || []).filter(w => w.status && w.status !== 'none')
       };
       const code = btoa(unescape(encodeURIComponent(JSON.stringify(exportPayload))));
-      latestDirectShareUrl = `${window.location.origin}${window.location.pathname}?share=${encodeURIComponent(code)}`;
+      const shortUserUrl = `${window.location.origin}${window.location.pathname}?user=${encodeURIComponent(prof.id)}`;
+      latestDirectShareUrl = shortUserUrl;
 
       const summary = [
         `【${prof.name} (${prof.handle}) のアニメ・漫画プロフィール】`,
         loveList.length ? `・殿堂入り: ${loveList.join(' / ')}` : '',
         curiousList.length ? `・気になってる: ${curiousList.join(' / ')}` : '',
         prof.bio ? `・ひとこと: ${prof.bio}` : '',
-        `・プロフィールを見る: ${latestDirectShareUrl}`
+        `・プロフィールURL: ${shortUserUrl}`
       ].filter(Boolean).join('\n');
 
       document.getElementById('share-summary-text').value = summary;
-      document.getElementById('share-export-code').value = code;
+      const exportCodeInput = document.getElementById('share-export-code');
+      if (exportCodeInput) exportCodeInput.value = code;
       document.getElementById('share-modal').classList.remove('hidden');
     }
 
@@ -2992,6 +2994,16 @@
     import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, doc, setDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+    // ご提示いただいた本番用 Firebase コンフィグ（GitHub Pages 等の外部公開時に自動使用されます）
+    const userFirebaseConfig = {
+      apiKey: "AIzaSyDR7QH6eNa4E--SN_wyDLSWLM4mexVJPbY",
+      authDomain: "animanga-shere-73798.firebaseapp.com",
+      projectId: "animanga-shere-73798",
+      storageBucket: "animanga-shere-73798.firebasestorage.app",
+      messagingSenderId: "785119733252",
+      appId: "1:785119733252:web:c0bf6b4d418322c142b751"
+    };
+
     const indicator = document.getElementById('cloud-sync-indicator');
     function setSyncStatus(text, isOnline) {
       if (!indicator) return;
@@ -3003,24 +3015,15 @@
 
     async function initCloudSync() {
       try {
-        if (typeof __firebase_config === 'undefined' || !__firebase_config) {
-          setSyncStatus('ローカル保存モード', false);
-          return;
-        }
-		const firebaseConfig = {
-  			apiKey: "AIzaSyDR7QH6eNa4E--SN_wyDLSWLM4mexVJPbY",
- 			authDomain: "animanga-shere-73798.firebaseapp.com",
-  			projectId: "animanga-shere-73798",
-  			storageBucket: "animanga-shere-73798.firebasestorage.app",
- 			messagingSenderId: "785119733252",
-  			appId: "1:785119733252:web:c0bf6b4d418322c142b751"
-		};
-        const appId = 'anicard-default-app';
+        const hasEnvConfig = typeof __firebase_config !== 'undefined' && __firebase_config;
+        const firebaseConfig = hasEnvConfig ? JSON.parse(__firebase_config) : userFirebaseConfig;
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'animanga-shere-73798';
+
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+        if (hasEnvConfig && typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
           await signInWithCustomToken(auth, __initial_auth_token);
         } else {
           await signInAnonymously(auth);
@@ -3081,7 +3084,7 @@
             },
             (err) => {
               console.error('Firestore sync error:', err);
-              setSyncStatus('オフライン保存', false);
+              setSyncStatus('ローカル保存モード（権限要確認）', false);
             }
           );
 
@@ -3099,6 +3102,15 @@
               console.error('Cloud save failed:', e);
             }
           };
+
+          // 初回接続時にローカルで作成済みの自分のマイページがあればクラウドへ同期
+          if (loggedInAccountId) {
+            const myAcc = accounts.find(a => a.id === loggedInAccountId);
+            const myProf = profiles.find(p => p.id === loggedInAccountId);
+            if (myAcc && myProf) {
+              window.__pushProfileToCloud(myAcc, myProf);
+            }
+          }
         });
       } catch (e) {
         console.error('Cloud init skipped:', e);
@@ -3109,4 +3121,4 @@
     initCloudSync();
   </script>
 </body>
-</html> 
+</html>
