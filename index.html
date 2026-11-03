@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>AniCard - アニメ・漫画プロフィール共有ボード</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -734,6 +737,10 @@
           <span class="font-bold text-md-onSurfaceVariant">クラウド上の検出プロフィール数</span>
           <span id="diag-cloud-count" class="font-extrabold text-md-onSurface">0件</span>
         </div>
+        <div class="pt-1.5 border-t border-md-outlineVariant/60 flex items-center justify-between gap-2">
+          <span class="font-bold text-md-onSurfaceVariant shrink-0">サーバー保存済みメンバー</span>
+          <span id="diag-cloud-members" class="font-extrabold text-md-primary truncate text-right">確認中...</span>
+        </div>
       </div>
 
       <div id="diag-guide-box" class="p-3.5 rounded-2xl bg-amber-50 border border-amber-300 text-amber-950 text-xs space-y-1.5 leading-relaxed">
@@ -964,6 +971,7 @@
         activeProfileId = loggedInAccountId || profiles[0].id;
       }
       syncActiveProfileWorks();
+      window.__anicardStateLoaded = true;
     }
 
     function saveSessionOnly() {
@@ -3284,7 +3292,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { initializeFirestore, doc, setDoc, deleteDoc, getDocs, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { initializeFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
     const userFirebaseConfig = {
       apiKey: "AIzaSyDR7QH6eNa4E--SN_wyDLSWLM4mexVJPbY",
@@ -3302,6 +3310,7 @@
       dbOk: false,
       dbMsg: '未確認',
       cloudCount: 0,
+      memberNames: 'なし',
       guideText: 'すべて正常に接続されています。'
     };
 
@@ -3309,6 +3318,7 @@
       const authEl = document.getElementById('diag-auth-status');
       const dbEl = document.getElementById('diag-db-status');
       const countEl = document.getElementById('diag-cloud-count');
+      const membersEl = document.getElementById('diag-cloud-members');
       const guideEl = document.getElementById('diag-guide-text');
       const domainEl = document.getElementById('diag-current-domain');
 
@@ -3322,6 +3332,7 @@
         dbEl.className = diagState.dbOk ? 'font-extrabold text-teal-700' : 'font-extrabold text-red-700';
       }
       if (countEl) countEl.textContent = `${diagState.cloudCount}人`;
+      if (membersEl) membersEl.textContent = diagState.memberNames || 'なし';
       if (guideEl) guideEl.textContent = diagState.guideText;
     }
 
@@ -3336,25 +3347,73 @@
       updateDiagUi();
     }
 
-    function sanitizeForFirestore(obj) {
-      return JSON.parse(JSON.stringify(obj));
+    // Firestore REST API のフィールド形式を通常のJSオブジェクトへ変換
+    function fromFirestoreRestValue(val) {
+      if (!val || typeof val !== 'object') return null;
+      if ('stringValue' in val) return val.stringValue;
+      if ('integerValue' in val) return Number(val.integerValue);
+      if ('doubleValue' in val) return Number(val.doubleValue);
+      if ('booleanValue' in val) return Boolean(val.booleanValue);
+      if ('nullValue' in val) return null;
+      if ('arrayValue' in val) {
+        return (val.arrayValue.values || []).map(fromFirestoreRestValue);
+      }
+      if ('mapValue' in val) {
+        const obj = {};
+        const fields = val.mapValue.fields || {};
+        for (const k of Object.keys(fields)) {
+          obj[k] = fromFirestoreRestValue(fields[k]);
+        }
+        return obj;
+      }
+      return null;
+    }
+
+    function decodeRestDocument(restDoc) {
+      if (!restDoc || !restDoc.fields) return null;
+      const fields = restDoc.fields;
+      if (fields.payloadJson && fields.payloadJson.stringValue) {
+        try {
+          return JSON.parse(fields.payloadJson.stringValue);
+        } catch (e) {}
+      }
+      return fromFirestoreRestValue({ mapValue: { fields } });
+    }
+
+    function decodeSdkDocument(sdkData) {
+      if (!sdkData) return null;
+      if (typeof sdkData.payloadJson === 'string') {
+        try {
+          return JSON.parse(sdkData.payloadJson);
+        } catch (e) {}
+      }
+      return sdkData;
+    }
+
+    async function waitForLocalStateReady() {
+      if (window.__anicardStateLoaded) return;
+      await new Promise(resolve => {
+        const check = () => {
+          if (window.__anicardStateLoaded) resolve();
+          else setTimeout(check, 50);
+        };
+        check();
+      });
     }
 
     async function initCloudSync() {
       try {
+        await waitForLocalStateReady();
+
         const primaryAppId = 'animanga-shere-73798';
-        // 過去バージョンや別環境で保存された可能性のあるパスをすべて統合監視対象にする
         const candidateAppIds = Array.from(new Set([
           primaryAppId,
           'anicard-shared-board',
-          'default-app-id',
-          'anicard-default-app',
-          ...(typeof __app_id !== 'undefined' && __app_id ? [String(__app_id)] : [])
+          'default-app-id'
         ]));
 
         const app = initializeApp(userFirebaseConfig, 'anicard-shared-prod');
         const auth = getAuth(app);
-        // 厳しいネットワークやブラウザ拡張・iframe環境でも途切れないようLongPolling自動検出を有効化
         const db = initializeFirestore(app, {
           experimentalAutoDetectLongPolling: true
         });
@@ -3367,28 +3426,34 @@
           console.warn('Anonymous auth warning:', authErr);
           const code = authErr?.code || '';
           diagState.authOk = false;
-          if (code === 'auth/unauthorized-domain') {
-            diagState.authMsg = `ドメイン未登録 (${window.location.hostname})`;
-            diagState.guideText = `GitHub Pagesのドメイン (${window.location.hostname}) がFirebase Authenticationの「承認済みドメイン」に未登録です。Firebaseコンソールの「Authentication ＞ 設定 ＞ 承認済みドメイン」に ${window.location.hostname} を追加するか、Firestoreのルールを「allow read, write: if true;」に変更してください。`;
-          } else {
-            diagState.authMsg = `スキップ (${code || '未有効'})`;
-          }
+          diagState.authMsg = `認証スキップ (${code || '未設定'})`;
         }
 
-        const primaryCol = collection(db, 'artifacts', primaryAppId, 'public', 'data', 'anicard_profiles');
-        const docsByPathAndId = new Map();
+        const getAuthHeaders = async () => {
+          const headers = { 'Content-Type': 'application/json' };
+          try {
+            if (auth.currentUser) {
+              const token = await auth.currentUser.getIdToken();
+              if (token) headers['Authorization'] = `Bearer ${token}`;
+            }
+          } catch (e) {}
+          return headers;
+        };
 
-        const processAllCollectedDocs = (removedIds = []) => {
+        const getRestCollectionUrl = (appId) =>
+          `https://firestore.googleapis.com/v1/projects/${userFirebaseConfig.projectId}/databases/(default)/documents/artifacts/${appId}/public/data/anicard_profiles`;
+
+        const serverDocsMap = new Map();
+
+        const applyCollectedServerDocs = (removedIds = []) => {
           const localState = window.__getLocalSyncState ? window.__getLocalSyncState() : { deletedProfileIds: [] };
           const deletedIds = localState.deletedProfileIds || [];
           const remoteAccountsMap = new Map();
           const remoteProfilesMap = new Map();
-          const profilesToMigrateToPrimary = [];
 
-          docsByPathAndId.forEach((entry) => {
-            const { data, docId, appIdSource } = entry;
+          serverDocsMap.forEach((entry) => {
+            const { data, docId } = entry;
             if (!data) return;
-
             const prof = data.profile || (data.name ? data : null);
             if (!prof) return;
             const pid = prof.id || docId;
@@ -3404,68 +3469,99 @@
             prof.id = pid;
             if (!Array.isArray(prof.works)) prof.works = [];
 
-            const existingUpdatedAt = remoteProfilesMap.get(pid)?.__updatedAt || 0;
-            const thisUpdatedAt = data.updatedAt || 1;
-            if (!remoteProfilesMap.has(pid) || thisUpdatedAt >= existingUpdatedAt) {
-              prof.__updatedAt = thisUpdatedAt;
+            const prevUpdated = remoteProfilesMap.get(pid)?.__updatedAt || 0;
+            const curUpdated = Number(data.updatedAt || 1);
+            if (!remoteProfilesMap.has(pid) || curUpdated >= prevUpdated) {
+              prof.__updatedAt = curUpdated;
               remoteAccountsMap.set(pid, acc);
               remoteProfilesMap.set(pid, prof);
             }
-
-            if (appIdSource !== primaryAppId) {
-              profilesToMigrateToPrimary.push({ account: acc, profile: prof });
-            }
           });
 
+          const namesList = Array.from(remoteProfilesMap.values()).map(p => `${p.name}(${p.handle})`);
           diagState.cloudCount = remoteProfilesMap.size;
-          diagState.dbOk = true;
-          diagState.dbMsg = '同期OK (リアルタイム接続中)';
-          if (diagState.authOk) {
-            diagState.guideText = `現在クラウド上に ${remoteProfilesMap.size} 人のプロフィールが保存・同期されています。`;
+          diagState.memberNames = namesList.length > 0 ? namesList.join(' / ') : 'なし（0人）';
+
+          if (window.__receiveCloudProfiles) {
+            window.__receiveCloudProfiles(
+              Array.from(remoteAccountsMap.values()),
+              Array.from(remoteProfilesMap.values()),
+              removedIds
+            );
           }
 
-          const totalMembers = window.__receiveCloudProfiles
-            ? window.__receiveCloudProfiles(
-                Array.from(remoteAccountsMap.values()),
-                Array.from(remoteProfilesMap.values()),
-                removedIds
-              )
-            : remoteProfilesMap.size;
-
-          setSyncStatus(`クラウド同期中 (${totalMembers}人)`, true);
-
-          // 旧パスにのみ存在していたプロフィールをメインパスへ自動集約
-          profilesToMigrateToPrimary.forEach(({ account, profile }) => {
-            const hasInPrimary = docsByPathAndId.has(`${primaryAppId}::${profile.id}`);
-            if (!hasInPrimary && window.__pushProfileToCloud) {
-              window.__pushProfileToCloud(account, profile, true);
-            }
-          });
+          if (diagState.dbOk) {
+            diagState.guideText = remoteProfilesMap.size > 0
+              ? `現在サーバー上に ${remoteProfilesMap.size} 人のプロフィール（${diagState.memberNames}）が保存されており、スマホ・PC間で同期されています。`
+              : `現在サーバー上の保存データは0人です。PC側で一度ページを再読み込みするか「今すぐ強制同期」を押すとPCのプロフィールがサーバーへ送信されます。`;
+            setSyncStatus(`クラウド同期中 (${remoteProfilesMap.size}人)`, true);
+          }
         };
 
-        // プロフィール変更をクラウドへ保存する関数
+        // 1. 直接HTTPS通信 (REST API PATCH) で確実にFirestoreサーバーへ保存する関数
         let cloudSaveTimer = null;
         window.__pushProfileToCloud = (accountObj, profileObj, immediate = false) => {
-          if (!accountObj || !profileObj) return;
+          if (!accountObj || !profileObj || !profileObj.id) return Promise.resolve(false);
+
           const execPush = async () => {
             try {
-              const cleanProfile = { ...profileObj };
+              const cleanProfile = JSON.parse(JSON.stringify(profileObj));
               delete cleanProfile.__updatedAt;
-              const ref = doc(db, 'artifacts', primaryAppId, 'public', 'data', 'anicard_profiles', profileObj.id);
-              await setDoc(ref, sanitizeForFirestore({
-                account: accountObj,
+              const cleanAccount = JSON.parse(JSON.stringify(accountObj));
+              const now = Date.now();
+
+              const payloadObj = {
+                account: cleanAccount,
                 profile: cleanProfile,
-                updatedAt: Date.now()
-              }));
+                updatedAt: now
+              };
+              const payloadStr = JSON.stringify(payloadObj);
+
+              const headers = await getAuthHeaders();
+              const url = `${getRestCollectionUrl(primaryAppId)}/${encodeURIComponent(cleanProfile.id)}`;
+              const res = await fetch(url, {
+                method: 'PATCH',
+                headers,
+                body: JSON.stringify({
+                  fields: {
+                    payloadJson: { stringValue: payloadStr },
+                    name: { stringValue: String(cleanProfile.name || '') },
+                    handle: { stringValue: String(cleanProfile.handle || '') },
+                    updatedAt: { integerValue: String(now) }
+                  }
+                })
+              });
+
+              if (!res.ok) {
+                const errJson = await res.json().catch(() => ({}));
+                const errStatus = errJson?.error?.status || `HTTP_${res.status}`;
+                const errMessage = errJson?.error?.message || '';
+                diagState.dbOk = false;
+                if (errStatus === 'NOT_FOUND' || res.status === 404) {
+                  diagState.dbMsg = 'Firestoreデータベース未作成 (NOT_FOUND)';
+                  diagState.guideText = '【原因が判明しました】Firebaseコンソール（animanga-shere-73798）で「Firestore Database」本体がまだ作成されていません。Firebaseの左メニュー「構築 ＞ Firestore Database」を開き、「データベースの作成」ボタンを押して作成し、ルールで allow read, write: if true; を公開してください。';
+                } else {
+                  diagState.dbMsg = `書き込み拒否 (${errStatus})`;
+                  diagState.guideText = `サーバーへの保存が拒否されました (${errStatus}: ${errMessage})。Firebaseコンソール ＞ Firestore Database ＞ ルール にて「allow read, write: if true;」にして公開ボタンを押してください。`;
+                }
+                setSyncStatus('DB設定確認(クリックで詳細)', false);
+                return false;
+              }
+
+              serverDocsMap.set(`${primaryAppId}::${cleanProfile.id}`, {
+                data: payloadObj,
+                docId: cleanProfile.id,
+                appIdSource: primaryAppId
+              });
               diagState.dbOk = true;
-              diagState.dbMsg = '書き込み＆同期OK';
-              updateDiagUi();
+              diagState.dbMsg = 'サーバー保存＆同期OK';
+              applyCollectedServerDocs([]);
+              return true;
             } catch (e) {
-              console.error('Cloud save failed:', e);
               diagState.dbOk = false;
-              diagState.dbMsg = `書き込みエラー (${e?.code || '権限不足'})`;
-              diagState.guideText = `Firestoreへの書き込みが拒否されました (${e?.code || ''})。Firebaseコンソール ＞ Firestore Database ＞ ルール にて「allow read, write: if true;」にして公開ボタンを押してください。`;
+              diagState.dbMsg = `通信失敗 (${e?.message || 'エラー'})`;
               setSyncStatus('同期エラー(クリックで確認)', false);
+              return false;
             }
           };
 
@@ -3473,24 +3569,30 @@
           if (immediate) {
             return execPush();
           } else {
-            cloudSaveTimer = setTimeout(execPush, 350);
+            return new Promise(resolve => {
+              cloudSaveTimer = setTimeout(async () => {
+                resolve(await execPush());
+              }, 300);
+            });
           }
         };
 
-        // プロフィール削除時に全候補パスからドキュメントを削除する関数
+        // 2. 直接HTTPS通信 (REST API DELETE) でサーバーからプロフィールを削除
         window.__deleteProfileFromCloud = async (profileId) => {
           if (!profileId) return;
+          const headers = await getAuthHeaders();
           for (const candidateId of candidateAppIds) {
+            serverDocsMap.delete(`${candidateId}::${profileId}`);
             try {
-              docsByPathAndId.delete(`${candidateId}::${profileId}`);
-              const ref = doc(db, 'artifacts', candidateId, 'public', 'data', 'anicard_profiles', profileId);
-              await deleteDoc(ref);
+              const url = `${getRestCollectionUrl(candidateId)}/${encodeURIComponent(profileId)}`;
+              await fetch(url, { method: 'DELETE', headers });
             } catch (e) {}
           }
+          applyCollectedServerDocs([profileId]);
         };
 
-        // ローカルにあってクラウドにまだ無いプロフィールをすべてクラウドへ送信する関数
-        const uploadMissingLocalProfiles = async () => {
+        // 3. この端末のlocalStorageにあるプロフィールをすべてサーバーへ送信
+        const uploadLocalProfilesToServer = async () => {
           const localState = window.__getLocalSyncState ? window.__getLocalSyncState() : null;
           if (!localState) return;
           const { accounts: localAccs, profiles: localProfs, deletedProfileIds: delIds } = localState;
@@ -3506,86 +3608,125 @@
           }
         };
 
-        // 手動または定期ポーリングで全候補パスから最新ドキュメントを取得する関数
-        const fetchAllCandidateCollections = async (showNotice = false) => {
+        // 4. 直接HTTPS通信 (REST API GET) でサーバー上の全プロフィールをキャッシュ無しで取得
+        const syncWithFirestoreServer = async (showNotice = false) => {
           try {
-            if (showNotice) setSyncStatus('同期通信中...', true);
-            await uploadMissingLocalProfiles();
+            if (showNotice) setSyncStatus('サーバー通信中...', true);
+            await uploadLocalProfilesToServer();
 
+            const headers = await getAuthHeaders();
             for (const candidateId of candidateAppIds) {
-              try {
-                const colRef = collection(db, 'artifacts', candidateId, 'public', 'data', 'anicard_profiles');
-                const snap = await getDocs(colRef);
-                snap.forEach(d => {
-                  docsByPathAndId.set(`${candidateId}::${d.id}`, {
-                    data: d.data(),
-                    docId: d.id,
+              const url = `${getRestCollectionUrl(candidateId)}?pageSize=100`;
+              const res = await fetch(url, {
+                method: 'GET',
+                headers,
+                cache: 'no-store'
+              });
+
+              if (!res.ok) {
+                if (candidateId === primaryAppId) {
+                  const errJson = await res.json().catch(() => ({}));
+                  const errStatus = errJson?.error?.status || `HTTP_${res.status}`;
+                  const errMessage = errJson?.error?.message || '';
+                  diagState.dbOk = false;
+                  if (errStatus === 'NOT_FOUND' || res.status === 404) {
+                    diagState.dbMsg = 'Firestoreデータベース未作成 (NOT_FOUND)';
+                    diagState.guideText = '【原因が判明しました】Firebaseコンソール（animanga-shere-73798）で「Firestore Database」本体がまだ作成されていません。Firebaseの左メニュー「構築 ＞ Firestore Database」を開き、「データベースの作成」ボタンを押して作成してください。';
+                    setSyncStatus('DB未作成(クリックで手順表示)', false);
+                  } else {
+                    diagState.dbMsg = `通信エラー (${errStatus})`;
+                    diagState.guideText = `サーバーからのデータ取得が拒否されました (${errStatus}: ${errMessage})。Firestore Database ＞ ルール を「allow read, write: if true;」にして公開してください。`;
+                    setSyncStatus('同期エラー(クリックで確認)', false);
+                  }
+                  return;
+                }
+                continue;
+              }
+
+              const json = await res.json();
+              const docs = Array.isArray(json.documents) ? json.documents : [];
+              const seenIdsInCandidate = new Set();
+
+              docs.forEach(restDoc => {
+                const pathParts = String(restDoc.name || '').split('/');
+                const docId = decodeURIComponent(pathParts[pathParts.length - 1] || '');
+                const decoded = decodeRestDocument(restDoc);
+                if (docId && decoded) {
+                  seenIdsInCandidate.add(docId);
+                  serverDocsMap.set(`${candidateId}::${docId}`, {
+                    data: decoded,
+                    docId,
                     appIdSource: candidateId
                   });
-                });
-              } catch (innerErr) {
-                if (candidateId === primaryAppId) throw innerErr;
-              }
+                }
+              });
+
+              // サーバー上で削除されたドキュメントをマップから除外
+              Array.from(serverDocsMap.keys()).forEach(k => {
+                if (k.startsWith(`${candidateId}::`)) {
+                  const idPart = k.split('::')[1];
+                  if (!seenIdsInCandidate.has(idPart)) {
+                    serverDocsMap.delete(k);
+                  }
+                }
+              });
             }
 
-            processAllCollectedDocs([]);
+            diagState.dbOk = true;
+            diagState.dbMsg = 'サーバー直接同期OK';
+            applyCollectedServerDocs([]);
+
             if (showNotice && typeof window.showToast === 'function') {
-              window.showToast(`クラウド同期完了（検出メンバー: ${diagState.cloudCount}人）`);
+              window.showToast(`サーバー同期完了（保存済みメンバー: ${diagState.cloudCount}人）`);
             }
           } catch (e) {
-            console.error('Cloud fetch error:', e);
             diagState.dbOk = false;
-            diagState.dbMsg = `読込エラー (${e?.code || 'ルール確認'})`;
-            diagState.guideText = `Firestoreからの読み込みが拒否されました (${e?.code || ''})。Firestore Database ＞ ルール を「allow read, write: if true;」に変更して公開してください。`;
+            diagState.dbMsg = `通信エラー (${e?.message || 'ネットワーク確認'})`;
             setSyncStatus('同期エラー(クリックで確認)', false);
           }
         };
 
-        window.__manualCloudSync = () => fetchAllCandidateCollections(true);
+        window.__manualCloudSync = () => syncWithFirestoreServer(true);
 
-        // 全候補パスに対してリアルタイム監視 (onSnapshot) を設定
+        // 5. リアルタイム監視 (onSnapshot) ※ローカル未送信キャッシュ(fromCache)による誤表示を除外
         candidateAppIds.forEach((candidateId) => {
           const colRef = collection(db, 'artifacts', candidateId, 'public', 'data', 'anicard_profiles');
           onSnapshot(
             colRef,
             (snapshot) => {
+              if (snapshot.metadata.fromCache) return;
               const removedIds = [];
               snapshot.docChanges().forEach(change => {
+                if (change.doc.metadata.hasPendingWrites) return;
                 const key = `${candidateId}::${change.doc.id}`;
                 if (change.type === 'removed') {
-                  docsByPathAndId.delete(key);
+                  serverDocsMap.delete(key);
                   removedIds.push(change.doc.id);
                 } else {
-                  docsByPathAndId.set(key, {
-                    data: change.doc.data(),
-                    docId: change.doc.id,
-                    appIdSource: candidateId
-                  });
+                  const decoded = decodeSdkDocument(change.doc.data());
+                  if (decoded) {
+                    serverDocsMap.set(key, {
+                      data: decoded,
+                      docId: change.doc.id,
+                      appIdSource: candidateId
+                    });
+                  }
                 }
               });
-              processAllCollectedDocs(removedIds);
+              diagState.dbOk = true;
+              diagState.dbMsg = 'リアルタイム同期OK';
+              applyCollectedServerDocs(removedIds);
             },
-            (err) => {
-              if (candidateId === primaryAppId) {
-                console.error('Primary Firestore listener error:', err);
-                diagState.dbOk = false;
-                diagState.dbMsg = `エラー (${err?.code || '接続失敗'})`;
-                setSyncStatus('同期エラー(クリックで確認)', false);
-              }
-            }
+            () => {}
           );
         });
 
-        // 初回接続時にローカルの全プロフィールをアップロード＆全パスを取得
-        await fetchAllCandidateCollections(false);
-
-        // タブをアクティブにした際＆15秒おきにバックグラウンド同期を実行
-        window.addEventListener('focus', () => fetchAllCandidateCollections(false));
-        setInterval(() => fetchAllCandidateCollections(false), 15000);
+        await syncWithFirestoreServer(false);
+        window.addEventListener('focus', () => syncWithFirestoreServer(false));
+        setInterval(() => syncWithFirestoreServer(false), 12000);
       } catch (e) {
-        console.error('Cloud init failed:', e);
         diagState.dbOk = false;
-        diagState.dbMsg = `初期化失敗 (${e?.message || 'エラー'})`;
+        diagState.dbMsg = `初期化エラー (${e?.message || '失敗'})`;
         setSyncStatus('同期エラー(クリックで確認)', false);
       }
     }
