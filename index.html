@@ -345,23 +345,30 @@
           </div>
         </section>
 
-        <!-- フィルターチップバー -->
-        <div class="flex items-center justify-between gap-4 pt-1">
+        <!-- フィルターチップバー ＆ ソート切り替え -->
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pt-1">
           <div class="flex items-center gap-2 overflow-x-auto ytm-shelf-scroll py-1" id="ytm-mood-chips">
-            <button onclick="setHomeFilter('ALL')" data-chip="ALL" class="m3-filter-chip m3-state-layer selected">すべて</button>
+            <button onclick="setHomeFilter('ALL')" data-chip="ALL" class="m3-filter-chip m3-state-layer selected">すべて表示</button>
             <button onclick="setHomeFilter('VIA_ANIME')" data-chip="VIA_ANIME" class="m3-filter-chip m3-state-layer">アニメ派のみ</button>
             <button onclick="setHomeFilter('VIA_MANGA')" data-chip="VIA_MANGA" class="m3-filter-chip m3-state-layer">漫画・原作派のみ</button>
-            <button onclick="setHomeFilter('VIA_BOTH')" data-chip="VIA_BOTH" class="m3-filter-chip m3-state-layer">両方履修 (両刀)</button>
+            <button onclick="setHomeFilter('VIA_BOTH')" data-chip="VIA_BOTH" class="m3-filter-chip m3-state-layer">両刀 (アニメ＆漫画)</button>
             <button onclick="setHomeFilter('PROG_INCOMPLETE')" data-chip="PROG_INCOMPLETE" class="m3-filter-chip m3-state-layer">途中まで・未完走のみ</button>
             <button onclick="setHomeFilter('PROG_COMPLETED')" data-chip="PROG_COMPLETED" class="m3-filter-chip m3-state-layer">完走済みのみ</button>
-            <button onclick="setHomeFilter('GENRE_SF・考察')" data-chip="GENRE_SF・考察" class="m3-filter-chip m3-state-layer">SF・考察</button>
-            <button onclick="setHomeFilter('GENRE_ファンタジー')" data-chip="GENRE_ファンタジー" class="m3-filter-chip m3-state-layer">ファンタジー</button>
-            <button onclick="setHomeFilter('GENRE_バトル')" data-chip="GENRE_バトル" class="m3-filter-chip m3-state-layer">バトル</button>
-            <button onclick="setHomeFilter('GENRE_日常・青春')" data-chip="GENRE_日常・青春" class="m3-filter-chip m3-state-layer">日常・青春</button>
           </div>
-          <span id="interaction-guide-label" class="hidden xl:inline-block text-xs font-medium text-md-onSurfaceVariant shrink-0">
-            バッジクリックで媒体・進捗（完走/途中まで）を切り替えられます
-          </span>
+
+          <div class="flex items-center gap-2 shrink-0">
+            <label for="home-sort-select" class="text-xs font-extrabold text-md-onSurfaceVariant">並び替え:</label>
+            <select
+              id="home-sort-select"
+              onchange="setHomeSort(this.value)"
+              class="h-9 px-3.5 rounded-xl bg-md-surfaceContainerLowest border border-md-outlineVariant text-xs font-extrabold text-md-onSurface focus:outline-none focus:border-md-primary"
+            >
+              <option value="RATING_DESC" selected>評価順（★高い順）</option>
+              <option value="DEFAULT">登録順（新しい順）</option>
+              <option value="TITLE_ASC">名前順（あいうえお・ABC順）</option>
+              <option value="MEDIA_ORDER">媒体順（アニメ → 漫画 → 両刀）</option>
+            </select>
+          </div>
         </div>
 
         <!-- 棚1: いつでも語れる・殿堂入り -->
@@ -382,26 +389,8 @@
           <div id="shelf-love" class="flex gap-4 overflow-x-auto ytm-shelf-scroll pb-2"></div>
         </section>
 
-        <!-- 棚2: 気になってる・布教歓迎 -->
+        <!-- 棚2: 履修済み一覧 -->
         <section class="space-y-3">
-          <div class="flex items-end justify-between">
-            <div>
-              <span class="text-[11px] font-extrabold tracking-wider uppercase text-md-tertiary">RECOMMENDATIONS WELCOME</span>
-              <div class="flex items-center gap-2.5">
-                <h2 class="text-xl sm:text-2xl font-extrabold text-md-onSurface">気になってる（布教・プレゼン歓迎）</h2>
-                <span id="count-curious" class="text-xs font-extrabold px-2.5 py-0.5 rounded-full bg-md-tertiaryContainer text-md-onTertiaryContainer">0</span>
-              </div>
-            </div>
-            <div class="flex items-center gap-1.5">
-              <button onclick="scrollShelf('shelf-curious', -1)" class="w-9 h-9 rounded-full border border-md-outlineVariant bg-md-surfaceContainerLowest flex items-center justify-center text-sm font-bold text-md-onSurface">‹</button>
-              <button onclick="scrollShelf('shelf-curious', 1)" class="w-9 h-9 rounded-full border border-md-outlineVariant bg-md-surfaceContainerLowest flex items-center justify-center text-sm font-bold text-md-onSurface">›</button>
-            </div>
-          </div>
-          <div id="shelf-curious" class="flex gap-4 overflow-x-auto ytm-shelf-scroll pb-2"></div>
-        </section>
-
-        <!-- 棚3: 履修済み一覧 -->
-        <section class="space-y-3 pb-10">
           <div class="flex items-end justify-between">
             <div>
               <span class="text-[11px] font-extrabold tracking-wider uppercase text-md-secondary">WATCHED & READ ARCHIVE</span>
@@ -416,6 +405,24 @@
             </div>
           </div>
           <div id="shelf-watched" class="flex gap-4 overflow-x-auto ytm-shelf-scroll pb-2"></div>
+        </section>
+
+        <!-- 棚3: 気になってる・布教歓迎 -->
+        <section class="space-y-3 pb-10">
+          <div class="flex items-end justify-between">
+            <div>
+              <span class="text-[11px] font-extrabold tracking-wider uppercase text-md-tertiary">RECOMMENDATIONS WELCOME</span>
+              <div class="flex items-center gap-2.5">
+                <h2 class="text-xl sm:text-2xl font-extrabold text-md-onSurface">気になってる（布教・プレゼン歓迎）</h2>
+                <span id="count-curious" class="text-xs font-extrabold px-2.5 py-0.5 rounded-full bg-md-tertiaryContainer text-md-onTertiaryContainer">0</span>
+              </div>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <button onclick="scrollShelf('shelf-curious', -1)" class="w-9 h-9 rounded-full border border-md-outlineVariant bg-md-surfaceContainerLowest flex items-center justify-center text-sm font-bold text-md-onSurface">‹</button>
+              <button onclick="scrollShelf('shelf-curious', 1)" class="w-9 h-9 rounded-full border border-md-outlineVariant bg-md-surfaceContainerLowest flex items-center justify-center text-sm font-bold text-md-onSurface">›</button>
+            </div>
+          </div>
+          <div id="shelf-curious" class="flex gap-4 overflow-x-auto ytm-shelf-scroll pb-2"></div>
         </section>
       </div>
 
@@ -479,6 +486,22 @@
                 <button onclick="setExploreMediaType('ANIME')" id="explore-type-ANIME" class="px-3.5 py-1 rounded-full text-xs font-bold text-md-onSurfaceVariant">アニメ</button>
                 <button onclick="setExploreMediaType('MANGA')" id="explore-type-MANGA" class="px-3.5 py-1 rounded-full text-xs font-bold text-md-onSurfaceVariant">漫画</button>
               </div>
+              <select
+                id="explore-era-select"
+                onchange="setExploreEraFilter(this.value)"
+                class="h-9 px-3.5 rounded-full bg-md-surfaceContainerHigh border border-md-outlineVariant text-xs font-extrabold text-md-onSurface focus:outline-none focus:border-md-primary"
+              >
+                <option value="ALL">年代：すべて（全期間）</option>
+                <option value="2026">2026年（今年の新作）</option>
+                <option value="2025">2025年</option>
+                <option value="2024">2024年</option>
+                <option value="2020S">2020年代（2020〜2026年）</option>
+                <option value="2015_2019">2015〜2019年（2010年代後半）</option>
+                <option value="2010_2014">2010〜2014年（2010年代前半）</option>
+                <option value="2000S">2000年代（2000〜2009年）</option>
+                <option value="1990S">1990年代（1990〜1999年）</option>
+                <option value="BEFORE_1990">1980年代以前（〜1989年・名作）</option>
+              </select>
               <button onclick="shuffleAndLoadMoreExplore()" class="m3-state-layer h-9 px-4 rounded-full bg-md-secondaryContainer text-md-onSecondaryContainer text-xs font-bold">
                 シャッフル補充
               </button>
@@ -502,13 +525,9 @@
           </div>
 
           <div class="flex items-center justify-between gap-3 flex-wrap pt-1">
-            <div class="flex items-center gap-2 overflow-x-auto ytm-shelf-scroll" id="explore-genre-chips">
-              <button onclick="selectExploreCategory('ALL')" data-cat="ALL" class="m3-filter-chip selected">すべてのジャンル</button>
-              <button onclick="selectExploreCategory('SF・考察')" data-cat="SF・考察" class="m3-filter-chip">SF・考察</button>
-              <button onclick="selectExploreCategory('ファンタジー')" data-cat="ファンタジー" class="m3-filter-chip">ファンタジー</button>
-              <button onclick="selectExploreCategory('バトル')" data-cat="バトル" class="m3-filter-chip">バトル</button>
-              <button onclick="selectExploreCategory('日常・青春')" data-cat="日常・青春" class="m3-filter-chip">日常・青春</button>
-            </div>
+            <p class="text-xs font-semibold text-md-onSurfaceVariant">
+              シーズン1・2や劇場版などの関連作は自動的に1つの作品シリーズとしてまとまります。
+            </p>
             <label class="flex items-center gap-2 text-xs font-bold text-md-onSurfaceVariant cursor-pointer select-none">
               <input type="checkbox" id="explore-hide-registered" onchange="renderExploreStreamGrid()" class="rounded border-md-outline">
               登録済みの作品を隠す
@@ -802,7 +821,7 @@
         </div>
       </div>
 
-      <div class="space-y-1.5">
+      <div id="comment-modal-rating-section" class="space-y-1.5">
         <div class="flex items-center justify-between">
           <label class="text-xs font-bold text-md-onSurfaceVariant block">作品の評価（5段階）</label>
           <button type="button" onclick="selectModalRating(0)" class="text-[11px] font-bold text-md-onSurfaceVariant hover:underline">評価をクリア</button>
@@ -843,34 +862,34 @@
     // ====================================================
     const STORAGE_KEY_STATE = 'anicard_state_prod_v2';
     const STORAGE_KEY_SESSION = 'anicard_session_prod_v2';
-    const STORAGE_KEY_COVERS = 'anicard_cover_cache_v5';
+    const STORAGE_KEY_COVERS = 'anicard_cover_cache_v7';
     const STORAGE_KEY_DELETED = 'anicard_deleted_profiles_v1';
 
     const masterCatalog = [
-      { id: 101, title: '葬送のフリーレン', media: 'アニメ・漫画', consumedVia: 'both', progressState: 'completed', genre: 'ファンタジー', sub: 'シリーズ統合（アニメ＆原作）', status: 'none', comment: '' },
-      { id: 102, title: '呪術廻戦', media: 'アニメ・漫画', consumedVia: 'both', progressState: 'completed', genre: 'バトル', sub: 'シリーズ統合（1期〜最新・劇場版・原作）', status: 'none', comment: '' },
-      { id: 103, title: '進撃の巨人', media: 'アニメ・漫画', consumedVia: 'both', progressState: 'completed', genre: 'SF・考察', sub: 'シリーズ統合（Season 1〜完結編・原作）', status: 'none', comment: '' },
-      { id: 104, title: 'ダンジョン飯', media: 'アニメ・漫画', consumedVia: 'both', progressState: 'completed', genre: 'ファンタジー', sub: 'シリーズ統合（アニメ＆原作全14巻）', status: 'none', comment: '' },
-      { id: 105, title: '薬屋のひとりごと', media: 'アニメ・漫画', consumedVia: 'both', progressState: 'completed', genre: 'SF・考察', sub: 'シリーズ統合（アニメ＆原作）', status: 'none', comment: '' },
-      { id: 106, title: 'チェンソーマン', media: 'アニメ・漫画', consumedVia: 'both', progressState: 'completed', genre: 'バトル', sub: 'シリーズ統合（TVアニメ・劇場版・原作）', status: 'none', comment: '' },
-      { id: 107, title: 'ぼっち・ざ・ろっく！', media: 'アニメ・漫画', consumedVia: 'both', progressState: 'completed', genre: '日常・青春', sub: 'シリーズ統合（TVアニメ・劇場総集編・原作）', status: 'none', comment: '' },
-      { id: 108, title: 'チ。―地球の運動について―', media: 'アニメ・漫画', consumedVia: 'both', progressState: 'completed', genre: 'SF・考察', sub: 'シリーズ統合（アニメ＆原作全8巻）', status: 'none', comment: '' },
-      { id: 109, title: 'ダンダダン', media: 'アニメ・漫画', consumedVia: 'both', progressState: 'completed', genre: 'バトル', sub: 'シリーズ統合（アニメ＆原作）', status: 'none', comment: '' },
-      { id: 110, title: 'アオのハコ', media: 'アニメ・漫画', consumedVia: 'both', progressState: 'completed', genre: '日常・青春', sub: 'シリーズ統合（アニメ＆原作）', status: 'none', comment: '' },
-      { id: 111, title: '鬼滅の刃', media: 'アニメ・漫画', consumedVia: 'both', progressState: 'completed', genre: 'バトル', sub: 'シリーズ統合（全編・劇場版・原作全23巻）', status: 'none', comment: '' },
-      { id: 112, title: 'ハイキュー!!', media: 'アニメ・漫画', consumedVia: 'both', progressState: 'completed', genre: '日常・青春', sub: 'シリーズ統合（1期〜4期・ゴミ捨て場の決戦・原作）', status: 'none', comment: '' },
-      { id: 113, title: 'STEINS;GATE', media: 'アニメ', consumedVia: 'anime', progressState: 'completed', genre: 'SF・考察', sub: 'シリーズ統合（本編・ゼロ・劇場版）', status: 'none', comment: '' },
-      { id: 114, title: '僕のヒーローアカデミア', media: 'アニメ・漫画', consumedVia: 'both', progressState: 'completed', genre: 'バトル', sub: 'シリーズ統合（1期〜最新・劇場版・原作）', status: 'none', comment: '' },
-      { id: 115, title: '【推しの子】', media: 'アニメ・漫画', consumedVia: 'both', progressState: 'completed', genre: 'SF・考察', sub: 'シリーズ統合（1期〜最新・原作）', status: 'none', comment: '' },
-      { id: 116, title: '怪獣8号', media: 'アニメ・漫画', consumedVia: 'both', progressState: 'completed', genre: 'バトル', sub: 'シリーズ統合（アニメ＆原作）', status: 'none', comment: '' },
-      { id: 117, title: 'ブルーロック', media: 'アニメ・漫画', consumedVia: 'both', progressState: 'completed', genre: 'バトル', sub: 'シリーズ統合（1期・2期・劇場版・原作）', status: 'none', comment: '' },
-      { id: 118, title: '無職転生 ～異世界行ったら本気だす～', media: 'アニメ・漫画', consumedVia: 'both', progressState: 'completed', genre: 'ファンタジー', sub: 'シリーズ統合（1期・2期・原作）', status: 'none', comment: '' },
-      { id: 119, title: 'コードギアス 反逆のルルーシュ', media: 'アニメ', consumedVia: 'anime', progressState: 'completed', genre: 'SF・考察', sub: 'シリーズ統合（1期・R2・劇場版）', status: 'none', comment: '' },
-      { id: 120, title: 'サマータイムレンダ', media: 'アニメ・漫画', consumedVia: 'both', progressState: 'completed', genre: 'SF・考察', sub: 'シリーズ統合（アニメ全25話・原作全13巻）', status: 'none', comment: '' },
-      { id: 121, title: 'メイドインアビス', media: 'アニメ・漫画', consumedVia: 'both', progressState: 'completed', genre: 'ファンタジー', sub: 'シリーズ統合（1期・劇場版・2期・原作）', status: 'none', comment: '' },
-      { id: 122, title: 'ハンター×ハンター', media: 'アニメ・漫画', consumedVia: 'both', progressState: 'completed', genre: 'バトル', sub: 'シリーズ統合（アニメ＆原作コミックス）', status: 'none', comment: '' },
-      { id: 123, title: 'キングダム', media: 'アニメ・漫画', consumedVia: 'both', progressState: 'completed', genre: 'バトル', sub: 'シリーズ統合（第1〜第5シリーズ・原作）', status: 'none', comment: '' },
-      { id: 124, title: 'スキップとローファー', media: 'アニメ・漫画', consumedVia: 'both', progressState: 'completed', genre: '日常・青春', sub: 'シリーズ統合（アニメ＆原作）', status: 'none', comment: '' }
+      { id: 101, title: '葬送のフリーレン', startYear: 2023, media: 'アニメ・漫画', consumedVia: 'both', progressState: 'completed', sub: '2020年連載 / 2023年アニメ', status: 'none', comment: '' },
+      { id: 102, title: '呪術廻戦', startYear: 2020, media: 'アニメ・漫画', consumedVia: 'both', progressState: 'completed', sub: '2018年連載 / 2020年アニメ', status: 'none', comment: '' },
+      { id: 103, title: '進撃の巨人', startYear: 2013, media: 'アニメ・漫画', consumedVia: 'both', progressState: 'completed', sub: '2009年連載 / 2013年アニメ', status: 'none', comment: '' },
+      { id: 104, title: 'ダンジョン飯', startYear: 2024, media: 'アニメ・漫画', consumedVia: 'both', progressState: 'completed', sub: '2014年連載 / 2024年アニメ', status: 'none', comment: '' },
+      { id: 105, title: '薬屋のひとりごと', startYear: 2023, media: 'アニメ・漫画', consumedVia: 'both', progressState: 'completed', sub: '2017年コミカライズ / 2023年アニメ', status: 'none', comment: '' },
+      { id: 106, title: 'チェンソーマン', startYear: 2022, media: 'アニメ・漫画', consumedVia: 'both', progressState: 'completed', sub: '2018年連載 / 2022年アニメ', status: 'none', comment: '' },
+      { id: 107, title: 'ぼっち・ざ・ろっく！', startYear: 2022, media: 'アニメ・漫画', consumedVia: 'both', progressState: 'completed', sub: '2018年連載 / 2022年アニメ', status: 'none', comment: '' },
+      { id: 108, title: 'チ。―地球の運動について―', startYear: 2024, media: 'アニメ・漫画', consumedVia: 'both', progressState: 'completed', sub: '2020年連載 / 2024年アニメ', status: 'none', comment: '' },
+      { id: 109, title: 'ダンダダン', startYear: 2024, media: 'アニメ・漫画', consumedVia: 'both', progressState: 'completed', sub: '2021年連載 / 2024年アニメ', status: 'none', comment: '' },
+      { id: 110, title: 'アオのハコ', startYear: 2024, media: 'アニメ・漫画', consumedVia: 'both', progressState: 'completed', sub: '2021年連載 / 2024年アニメ', status: 'none', comment: '' },
+      { id: 111, title: '鬼滅の刃', startYear: 2019, media: 'アニメ・漫画', consumedVia: 'both', progressState: 'completed', sub: '2016年連載 / 2019年アニメ', status: 'none', comment: '' },
+      { id: 112, title: 'ハイキュー!!', startYear: 2014, media: 'アニメ・漫画', consumedVia: 'both', progressState: 'completed', sub: '2012年連載 / 2014年アニメ', status: 'none', comment: '' },
+      { id: 113, title: 'STEINS;GATE', startYear: 2011, media: 'アニメ', consumedVia: 'anime', progressState: 'completed', sub: '2011年放送（本編・ゼロ・劇場版）', status: 'none', comment: '' },
+      { id: 114, title: '僕のヒーローアカデミア', startYear: 2016, media: 'アニメ・漫画', consumedVia: 'both', progressState: 'completed', sub: '2014年連載 / 2016年アニメ', status: 'none', comment: '' },
+      { id: 115, title: '【推しの子】', startYear: 2023, media: 'アニメ・漫画', consumedVia: 'both', progressState: 'completed', sub: '2020年連載 / 2023年アニメ', status: 'none', comment: '' },
+      { id: 116, title: '怪獣8号', startYear: 2024, media: 'アニメ・漫画', consumedVia: 'both', progressState: 'completed', sub: '2020年連載 / 2024年アニメ', status: 'none', comment: '' },
+      { id: 117, title: 'ブルーロック', startYear: 2022, media: 'アニメ・漫画', consumedVia: 'both', progressState: 'completed', sub: '2018年連載 / 2022年アニメ', status: 'none', comment: '' },
+      { id: 118, title: '無職転生 ～異世界行ったら本気だす～', startYear: 2021, media: 'アニメ・漫画', consumedVia: 'both', progressState: 'completed', sub: '2021年アニメ（1期・2期・原作）', status: 'none', comment: '' },
+      { id: 119, title: 'コードギアス 反逆のルルーシュ', startYear: 2006, media: 'アニメ', consumedVia: 'anime', progressState: 'completed', sub: '2006年放送（1期・R2・劇場版）', status: 'none', comment: '' },
+      { id: 120, title: 'サマータイムレンダ', startYear: 2022, media: 'アニメ・漫画', consumedVia: 'both', progressState: 'completed', sub: '2017年連載 / 2022年アニメ', status: 'none', comment: '' },
+      { id: 121, title: 'メイドインアビス', startYear: 2017, media: 'アニメ・漫画', consumedVia: 'both', progressState: 'completed', sub: '2012年連載 / 2017年アニメ', status: 'none', comment: '' },
+      { id: 122, title: 'HUNTER×HUNTER', startYear: 1998, media: 'アニメ・漫画', consumedVia: 'both', progressState: 'completed', sub: '1998年連載 / 1999・2011年アニメ', status: 'none', comment: '' },
+      { id: 123, title: 'キングダム', startYear: 2006, media: 'アニメ・漫画', consumedVia: 'both', progressState: 'completed', sub: '2006年連載 / 2012年アニメ', status: 'none', comment: '' },
+      { id: 124, title: 'スキップとローファー', startYear: 2023, media: 'アニメ・漫画', consumedVia: 'both', progressState: 'completed', sub: '2018年連載 / 2023年アニメ', status: 'none', comment: '' }
     ];
 
     let seasonalAnimeCatalog = [];
@@ -885,12 +904,13 @@
     let currentTab = 'home';
     let sidebarCollapsed = false;
     let homeFilterChip = 'ALL';
+    let homeSortMode = 'RATING_DESC';
     let highlightSharedWorksMode = false;
     let seasonalFilterMode = 'ALL';
     let currentSeasonalPeriod = 'CURRENT';
 
     let exploreMediaType = 'ALL';
-    let exploreCategory = 'ALL';
+    let exploreEraFilter = 'ALL';
     let exploreSearchQuery = '';
     let exploreStreamItems = [];
     let exploreApiPage = 1;
@@ -914,16 +934,23 @@
     }
 
     // ====================================================
-    // 4. AniList GraphQL API によるアニメ＆漫画カバー取得（レート制限回避・バッチキュー方式）
+    // 4. AniList GraphQL API によるアニメ＆漫画カバー取得（レート制限回避・媒体別厳密キャッシュ）
     // ====================================================
     const pendingCoverQueueMap = new Map();
     const attemptedCoverKeys = new Set();
     let coverBatchTimer = null;
     let isCoverBatchRunning = false;
 
-    // 1期・2期・劇場版・章サブタイトル等を除去して「基本シリーズ名」に1本化する関数
+    // 全角英数字を半角に揃える補助関数
+    function toHalfWidthAlphaNum(str) {
+      return String(str || '').replace(/[Ａ-Ｚａ-ｚ０-９]/g, s =>
+        String.fromCharCode(s.charCodeAt(0) - 0xFEE0)
+      );
+    }
+
+    // 1期・2期・劇場版・章サブタイトル等を徹底除去して「基本シリーズ名」に1本化する関数
     function extractCanonicalSeriesTitle(rawTitle) {
-      let base = String(rawTitle || '').trim();
+      let base = toHalfWidthAlphaNum(String(rawTitle || '').trim());
       if (!base) return '';
 
       // 1. 『劇場版「鬼滅の刃」無限列車編』のように括弧でくくられた作品名を抽出
@@ -932,25 +959,33 @@
         base = bracketMovieMatch[1].trim();
       }
 
-      // 2. 先頭の「劇場版」「TVアニメ」などのプレフィックスを除去
+      // 2. 先頭の「劇場版」「TVアニメ」「続」などのプレフィックスを除去
       base = base
-        .replace(/^(?:劇場版|TVアニメ|オリジナルTVアニメーション|アニメーション映画)\s+/i, '')
+        .replace(/^(?:劇場版|TVアニメ|オリジナルTVアニメーション|アニメーション映画|アニメ)\s+/i, '')
         .replace(/^(?:劇場版|TVアニメ)\s*[「『]/i, '')
         .replace(/^映画\s+(?=\S)/i, '');
 
-      // 3. シーズン・期・章・Part・劇場版サブタイトルなどの末尾表記を反復除去
+      // 3. シーズン・期・章・Part・劇場版・サブタイトルなどの末尾表記を反復除去
       const tailPatterns = [
-        /\s*[-:：〜~]?\s*(?:The\s+)?Final\s+Season.*$/i,
-        /\s*[-:：〜~]?\s*(?:Season\s*\d+|\d+(?:st|nd|rd|th)\s+Season).*$/i,
-        /\s*[-:：〜~]?\s*(?:Part\s*\d+|第\s*[0-9０-９一二三四五六七八九十]+\s*(?:期|クール|章|部|幕)).*$/i,
-        /\s*[-:：〜~]?\s*(?:壱|弐|参|肆|伍)ノ(?:章|陣).*$/i,
-        /\s+(?:II|III|IV|V|VI|２|３|４)(?:\s+.*|$)/,
-        /\s*(?:完結編|前編|後編|総集編|特別編|番外編|新作OVA|OVA|OAD|劇場版).*$/i,
-        /\s*[-:：〜~]?\s*(?:懐玉・玉折|渋谷事変|死滅回游|無限列車編|遊郭編|刀鍛冶の里編|柱稽古編|無限城編|聖夜決戦編|天竺編|関東事変).*$/i
+        /\s*[-:：〜~／/]\s*(?:The\s+)?Final\s+Season.*$/i,
+        /\s+(?:The\s+)?Final\s+Season.*$/i,
+        /\s*[-:：〜~／/]?\s*(?:Season\s*\d+|\d+\s*(?:st|nd|rd|th)\s+Season).*$/i,
+        /\s*[-:：〜~／/]?\s*(?:Part\s*\d+|第\s*[0-9一二三四五六七八九十]+\s*(?:期|クール|章|部|幕|シリーズ)).*$/i,
+        /\s*[-:：〜~／/]?\s*[0-9]+\s*(?:期|クール|章|シリーズ).*$/i,
+        /\s*[-:：〜~／/]?\s*(?:壱|弐|参|肆|伍)ノ(?:章|陣).*$/i,
+        /\s+(?:II|III|IV|V|VI|2|3|4|5)(?:\s+.*|$)/i,
+        /[0-9]+$/i,
+        /\s*(?:完結編|前編|後編|総集編|特別編|番外編|新作OVA|OVA|OAD|劇場版|映画).*$/i,
+        /\s*[-:：〜~／/]\s*[^\s]+(?:編|章|伝|譚|記|録|戦|事変|回游|決戦).*$/i,
+        /\s+[^\s]+(?:編|事変|回游|決戦|列車|遊郭|里|稽古|無限城)$/i,
+        /\s*[(（][0-9]{4}[)）]$/,
+        /\s*[(（](?:TV|アニメ|漫画|コミック|ノベル)[)）]$/i
       ];
 
-      for (let i = 0; i < 3; i++) {
+      for (let i = 0; i < 4; i++) {
         tailPatterns.forEach(regex => {
+          // 数字単体除去（[0-9]+$）は『86』『怪獣8号』などを壊さないよう空白・記号区切りのみ対象にする
+          if (regex.source === '[0-9]+$') return;
           const next = base.replace(regex, '').trim();
           if (next.length >= 2) base = next;
         });
@@ -961,8 +996,8 @@
 
     function normalizeTitleKey(title) {
       const canonical = extractCanonicalSeriesTitle(title);
-      return String(canonical || title || '')
-        .replace(/[\s　・―\-!！?？:：〜~「」『』【】()（）/／]/g, '')
+      return toHalfWidthAlphaNum(String(canonical || title || ''))
+        .replace(/[\s　・―\-!！?？:：〜~「」『』【】()（）/／,，.。'"’”]/g, '')
         .toLowerCase();
     }
 
@@ -979,26 +1014,39 @@
       if (a.id && b.id && a.id === b.id) return true;
       const keyA = getSeriesKey(a);
       const keyB = getSeriesKey(b);
-      return Boolean(keyA && keyB && keyA === keyB);
+      if (!keyA || !keyB) return false;
+      if (keyA === keyB) return true;
+      // 片方がもう片方の先頭シリーズ名と完全一致し、長さが4文字以上ある場合も同一シリーズとして統合
+      if (keyA.length >= 4 && keyB.length >= 4) {
+        if (keyA.startsWith(keyB) || keyB.startsWith(keyA)) {
+          const diff = Math.abs(keyA.length - keyB.length);
+          if (diff <= 6) return true;
+        }
+      }
+      return false;
     }
 
     // プロフィール内の作品リストで同一シリーズ（1期・2期・劇場版など）が分かれていたら1つに統合する
     function consolidateSeriesWorksList(list) {
       if (!Array.isArray(list) || list.length === 0) return [];
       const statusRank = { love: 3, watched: 2, curious: 1, none: 0 };
-      const map = new Map();
+      const unifiedList = [];
 
       list.forEach(item => {
         if (!item) return;
         const canonicalTitle = extractCanonicalSeriesTitle(item.title);
-        const key = normalizeTitleKey(canonicalTitle) || String(item.id);
         item.title = canonicalTitle;
         item.searchTitle = canonicalTitle;
 
-        if (!map.has(key)) {
-          map.set(key, item);
+        const existing = unifiedList.find(u => isSameWorkOrSeries(u, item));
+        if (!existing) {
+          unifiedList.push(item);
         } else {
-          const existing = map.get(key);
+          // より短い基本タイトル名を優先
+          if (canonicalTitle.length >= 2 && canonicalTitle.length < existing.title.length) {
+            existing.title = canonicalTitle;
+            existing.searchTitle = canonicalTitle;
+          }
           if ((statusRank[item.status] || 0) > (statusRank[existing.status] || 0)) {
             existing.status = item.status;
           }
@@ -1016,47 +1064,102 @@
         }
       });
 
-      return Array.from(map.values());
+      return unifiedList;
     }
 
     function getWorkDisplayImage(w) {
       if (!w) return makeFallbackPosterUrl('WORK');
       const via = ensureConsumedVia(w);
       const tKey = normalizeTitleKey(w.title);
-      const cacheEntry = coverCache[tKey] || coverCache[w.id];
+      const cacheEntry = coverCache[tKey] || coverCache[w.id] || {};
 
-      // 探索で「漫画」タブ選択中は漫画カバーを優先表示
+      // 「漫画・原作派」または探索で「漫画」タブ選択中は漫画単行本カバーを優先表示
       const preferManga = via === 'manga' || (currentTab === 'edit' && exploreMediaType === 'MANGA');
 
       if (preferManga) {
         if (w.mangaImageUrl) return w.mangaImageUrl;
-        if (cacheEntry && cacheEntry.manga) return cacheEntry.manga;
-        enqueueCoverLookup(w);
+        if (cacheEntry.manga) return cacheEntry.manga;
+        // 漫画カバーが未取得ならキューに追加して取得する
+        enqueueCoverLookup(w, true);
         if (w.media === '漫画' && w.imageUrl) return w.imageUrl;
-        if (cacheEntry && cacheEntry.anime) return cacheEntry.anime;
-        if (w.animeImageUrl) return w.animeImageUrl;
-        return w.imageUrl || makeFallbackMangaUrl(w.title);
+        return cacheEntry.anime || w.animeImageUrl || w.imageUrl || makeFallbackMangaUrl(w.title);
       }
 
-      // アニメ派 または 両刀 の場合はアニメ版のキービジュアルを最優先
+      // アニメ派 または 両刀 の場合はアニメ版のキービジュアルを優先
       if (w.animeImageUrl) return w.animeImageUrl;
-      if (cacheEntry && cacheEntry.anime) return cacheEntry.anime;
-      enqueueCoverLookup(w);
+      if (cacheEntry.anime) return cacheEntry.anime;
+      // アニメカバーが未取得ならキューに追加して取得する
+      enqueueCoverLookup(w, true);
       if (w.media !== '漫画' && w.imageUrl) return w.imageUrl;
-      if (cacheEntry && cacheEntry.manga) return cacheEntry.manga;
-      if (w.mangaImageUrl) return w.mangaImageUrl;
-      return w.imageUrl || makeFallbackPosterUrl(w.title);
+      return cacheEntry.manga || w.mangaImageUrl || w.imageUrl || makeFallbackPosterUrl(w.title);
     }
 
-    // 個別リクエストの乱発を防ぎ、キューに溜めて一括取得する
-    function enqueueCoverLookup(w) {
+    // 媒体を切り替えた際や未取得時に確実にアニメ＆漫画両方のカバーを取得する
+    function enqueueCoverLookup(w, forceIfMissingMedia = false) {
       if (!w || !w.title) return;
       const tKey = normalizeTitleKey(w.title);
-      if (!tKey || attemptedCoverKeys.has(tKey)) return;
-      const cached = coverCache[tKey];
-      if (cached && cached.anime && cached.manga) return;
+      if (!tKey) return;
+      const cached = coverCache[tKey] || {};
+      const hasBoth = Boolean(cached.anime && cached.manga);
+      if (hasBoth) return;
+      if (!forceIfMissingMedia && attemptedCoverKeys.has(tKey)) return;
+      if (forceIfMissingMedia && attemptedCoverKeys.has(tKey) && (cached.anime || cached.manga)) {
+        // すでに試行済みでも片方のカバーが欠けている場合は個別再取得を許可
+      }
       pendingCoverQueueMap.set(tKey, w);
       scheduleCoverBatchExecution();
+    }
+
+    // ユーザーが手動で「アニメ派 / 漫画派 / 両刀」を切り替えた瞬間に即時カバーを取得・DOM更新する関数
+    async function fetchAndApplyMediaCoverNow(w) {
+      if (!w || !w.title) return;
+      const tKey = normalizeTitleKey(w.title);
+      const cleanSearch = extractCanonicalSeriesTitle(w.searchTitle || w.title);
+      const query = `
+        query ($s: String) {
+          anime: Media(search: $s, type: ANIME, sort: POPULARITY_DESC, isAdult: false) {
+            id
+            coverImage { large }
+          }
+          manga: Media(search: $s, type: MANGA, sort: POPULARITY_DESC, isAdult: false) {
+            id
+            coverImage { large }
+          }
+        }
+      `;
+      try {
+        const res = await fetch('https://graphql.anilist.co', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify({ query, variables: { s: cleanSearch } })
+        });
+        if (!res.ok) return;
+        const json = await res.json();
+        const animeCover = json?.data?.anime?.coverImage?.large || '';
+        const mangaCover = json?.data?.manga?.coverImage?.large || '';
+
+        const prev = coverCache[tKey] || {};
+        const nextEntry = {
+          anime: animeCover || prev.anime || w.animeImageUrl || '',
+          manga: mangaCover || prev.manga || w.mangaImageUrl || ''
+        };
+        coverCache[tKey] = nextEntry;
+        if (w.id) coverCache[w.id] = nextEntry;
+
+        const applyToTarget = (target) => {
+          if (!target || normalizeTitleKey(target.title) !== tKey) return;
+          if (nextEntry.anime) target.animeImageUrl = nextEntry.anime;
+          if (nextEntry.manga) target.mangaImageUrl = nextEntry.manga;
+        };
+        works.forEach(applyToTarget);
+        exploreStreamItems.forEach(applyToTarget);
+        profiles.forEach(p => (p.works || []).forEach(applyToTarget));
+
+        saveCoverCache();
+        if (currentTab === 'home') renderAll();
+        if (currentTab === 'edit') updateSingleExploreCardDom(w.id);
+        if (currentTab === 'library') renderEditorGrid();
+      } catch (e) {}
     }
 
     function scheduleCoverBatchExecution() {
@@ -1064,7 +1167,7 @@
       coverBatchTimer = setTimeout(() => {
         coverBatchTimer = null;
         processPendingCoverQueue();
-      }, 220);
+      }, 200);
     }
 
     async function processPendingCoverQueue() {
@@ -1108,7 +1211,6 @@
           });
 
           if (!res.ok) {
-            // レート制限時は少し待ってから抜ける
             break;
           }
 
@@ -1121,18 +1223,18 @@
             const tKey = normalizeTitleKey(item.title);
             const prev = coverCache[tKey] || {};
 
-            const animeCover = animeNode?.coverImage?.large || prev.anime || item.animeImageUrl || (item.media !== '漫画' ? item.imageUrl : '') || '';
-            const mangaCover = mangaNode?.coverImage?.large || prev.manga || item.mangaImageUrl || (item.media === '漫画' ? item.imageUrl : '') || '';
+            // アニメ画像と漫画画像を絶対に混同せず別々に保持する
+            const animeCover = animeNode?.coverImage?.large || prev.anime || item.animeImageUrl || '';
+            const mangaCover = mangaNode?.coverImage?.large || prev.manga || item.mangaImageUrl || '';
 
             if (animeCover || mangaCover) {
               const entry = {
-                anime: animeCover || mangaCover,
-                manga: mangaCover || animeCover
+                anime: animeCover,
+                manga: mangaCover
               };
               coverCache[tKey] = entry;
               if (item.id) coverCache[item.id] = entry;
 
-              // メモリ上の全リスト（works / exploreStreamItems / profiles）の該当作品にも即時反映
               const applyToTarget = (target) => {
                 if (!target || normalizeTitleKey(target.title) !== tKey) return;
                 if (entry.anime) target.animeImageUrl = entry.anime;
@@ -1167,11 +1269,11 @@
     }
 
     function queueSingleCoverLookup(w) {
-      enqueueCoverLookup(w);
+      fetchAndApplyMediaCoverNow(w);
     }
 
     function queueSingleMangaCoverLookup(w) {
-      enqueueCoverLookup(w);
+      fetchAndApplyMediaCoverNow(w);
     }
 
     function saveCoverCache() {
@@ -1559,24 +1661,33 @@
       if (via === 'manga') {
         return {
           code: 'manga',
+          shortTag: 'MANGA',
           label: '漫画・原作派',
           subText: '漫画・単行本で履修',
-          pillClass: 'bg-md-tertiaryContainer text-md-onTertiaryContainer border-md-tertiary'
+          headerBarClass: 'bg-[#8F2456] text-white',
+          cardBorderClass: 'border-[#8F2456] border-2',
+          pillClass: 'bg-[#FFD8E8] text-[#5C0D32] border-[#8F2456]'
         };
       }
       if (via === 'both') {
         return {
           code: 'both',
-          label: '両刀',
+          shortTag: 'ANIME & MANGA',
+          label: '両刀 (アニメ＆漫画)',
           subText: 'アニメ＆原作両方',
-          pillClass: 'bg-md-secondaryContainer text-md-onSecondaryContainer border-md-secondary'
+          headerBarClass: 'bg-[#0D6B58] text-white',
+          cardBorderClass: 'border-[#0D6B58] border-2',
+          pillClass: 'bg-[#C4F5E9] text-[#05382E] border-[#0D6B58]'
         };
       }
       return {
         code: 'anime',
+        shortTag: 'ANIME',
         label: 'アニメ派',
         subText: 'アニメで視聴',
-        pillClass: 'bg-md-primaryContainer text-md-onPrimaryContainer border-md-primary'
+        headerBarClass: 'bg-[#2E45B8] text-white',
+        cardBorderClass: 'border-[#2E45B8] border-2',
+        pillClass: 'bg-[#DEE0FF] text-[#00105C] border-[#2E45B8]'
       };
     }
 
@@ -1690,6 +1801,37 @@
       renderAll();
     }
 
+    function setHomeSort(sortCode) {
+      homeSortMode = sortCode || 'RATING_DESC';
+      renderAll();
+    }
+
+    function sortProfileWorksList(list) {
+      if (!Array.isArray(list)) return [];
+      const copy = [...list];
+      if (homeSortMode === 'RATING_DESC') {
+        return copy.sort((a, b) => {
+          const rDiff = ensureRating(b) - ensureRating(a);
+          if (rDiff !== 0) return rDiff;
+          return String(a.title || '').localeCompare(String(b.title || ''), 'ja');
+        });
+      }
+      if (homeSortMode === 'TITLE_ASC') {
+        return copy.sort((a, b) =>
+          String(a.title || '').localeCompare(String(b.title || ''), 'ja')
+        );
+      }
+      if (homeSortMode === 'MEDIA_ORDER') {
+        const order = { anime: 1, manga: 2, both: 3 };
+        return copy.sort((a, b) => {
+          const mDiff = (order[ensureConsumedVia(a)] || 9) - (order[ensureConsumedVia(b)] || 9);
+          if (mDiff !== 0) return mDiff;
+          return ensureRating(b) - ensureRating(a);
+        });
+      }
+      return copy;
+    }
+
     function filterWorkByHomeChip(w) {
       if (homeFilterChip === 'ALL') return true;
       const via = ensureConsumedVia(w);
@@ -1699,10 +1841,6 @@
       if (homeFilterChip === 'VIA_BOTH') return via === 'both';
       if (homeFilterChip === 'PROG_INCOMPLETE') return prog === 'partial' || prog === 'early';
       if (homeFilterChip === 'PROG_COMPLETED') return prog === 'completed';
-      if (homeFilterChip.startsWith('GENRE_')) {
-        const g = homeFilterChip.replace('GENRE_', '');
-        return w.genre === g;
-      }
       return true;
     }
 
@@ -1718,13 +1856,9 @@
       const current = ensureConsumedVia(w);
       const next = order[(order.indexOf(current) + 1) % order.length];
       w.consumedVia = next;
-      if (next === 'manga') {
-        queueSingleCoverLookup(w, 'MANGA');
-      } else {
-        queueSingleCoverLookup(w, 'ANIME');
-      }
       saveStateToStorage();
       renderAll();
+      fetchAndApplyMediaCoverNow(w);
       const meta = getConsumedViaMeta(next);
       showToast(`『${w.title}』を「${meta.label}」に変更しました`);
     }
@@ -1977,7 +2111,6 @@
                 anilistId: m.id,
                 title: seriesTitle,
                 broadcastTitle: rawTitle !== seriesTitle ? rawTitle : '',
-                genre: mapAnilistGenresToJp(m.genres),
                 sub: (rawTitle !== seriesTitle ? `放送枠: ${rawTitle}` : (m.studios?.nodes?.[0]?.name || `${seasonYear}年${seasonJpMap[season] || ''}アニメ`)),
                 imageUrl: cover,
                 animeImageUrl: cover
@@ -2102,7 +2235,7 @@
             <div class="flex-1 min-w-0 flex flex-col justify-between">
               <div>
                 <div class="flex items-center gap-1.5 flex-wrap">
-                  <span class="px-2 py-0.5 rounded bg-md-primaryContainer text-md-onPrimaryContainer text-[10px] font-extrabold">${escapeHtmlAttr(item.genre || 'アニメ')}</span>
+                  <span class="px-2 py-0.5 rounded bg-[#2E45B8] text-white text-[10px] font-extrabold">TV ANIME</span>
                   <span class="text-[11px] font-semibold text-md-onSurfaceVariant truncate">${escapeHtmlAttr(item.sub || '')}</span>
                 </div>
                 <h3 class="font-extrabold text-sm text-md-onSurface line-clamp-2 mt-1" title="${escapeHtmlAttr(item.title)}">${escapeHtmlAttr(item.title)}</h3>
@@ -2147,19 +2280,60 @@
     // ====================================================
     // 8. 探索・作品追加（検索・エンドレスストリーム・非リロード更新）
     // ====================================================
-    function mapAnilistGenresToJp(genres = []) {
-      if (!Array.isArray(genres)) return 'アニメ・漫画';
-      if (genres.includes('Sci-Fi') || genres.includes('Mystery') || genres.includes('Psychological')) return 'SF・考察';
-      if (genres.includes('Fantasy') || genres.includes('Supernatural')) return 'ファンタジー';
-      if (genres.includes('Action') || genres.includes('Adventure')) return 'バトル';
-      if (genres.includes('Slice of Life') || genres.includes('Comedy') || genres.includes('Romance') || genres.includes('Sports')) return '日常・青春';
-      return 'アニメ・漫画';
+    function getEraDateRange(eraCode) {
+      switch (eraCode) {
+        case '2026':
+          return { greater: 20251231, lesser: 20270101, minYear: 2026, maxYear: 2026, label: '2026年' };
+        case '2025':
+          return { greater: 20241231, lesser: 20260101, minYear: 2025, maxYear: 2025, label: '2025年' };
+        case '2024':
+          return { greater: 20231231, lesser: 20250101, minYear: 2024, maxYear: 2024, label: '2024年' };
+        case '2020S':
+          return { greater: 20191231, lesser: 20270101, minYear: 2020, maxYear: 2026, label: '2020年代' };
+        case '2015_2019':
+          return { greater: 20141231, lesser: 20200101, minYear: 2015, maxYear: 2019, label: '2015〜2019年' };
+        case '2010_2014':
+          return { greater: 20091231, lesser: 20150101, minYear: 2010, maxYear: 2014, label: '2010〜2014年' };
+        case '2000S':
+          return { greater: 19991231, lesser: 20100101, minYear: 2000, maxYear: 2009, label: '2000年代' };
+        case '1990S':
+          return { greater: 19891231, lesser: 20000101, minYear: 1990, maxYear: 1999, label: '1990年代' };
+        case 'BEFORE_1990':
+          return { greater: 19000101, lesser: 19900101, minYear: 1900, maxYear: 1989, label: '1980年代以前' };
+        default:
+          return null;
+      }
+    }
+
+    function getSeedCatalogForCurrentExploreFilter() {
+      const eraRange = getEraDateRange(exploreEraFilter);
+      return JSON.parse(JSON.stringify(masterCatalog))
+        .filter(item => {
+          if (exploreMediaType === 'ANIME' && !String(item.media || '').includes('アニメ')) return false;
+          if (exploreMediaType === 'MANGA' && !String(item.media || '').includes('漫画')) return false;
+          if (eraRange) {
+            const y = Number(item.startYear) || 0;
+            if (!y || y < eraRange.minYear || y > eraRange.maxYear) return false;
+          }
+          return true;
+        })
+        .map(item => {
+          if (exploreMediaType === 'ANIME') {
+            item.consumedVia = 'anime';
+          } else if (exploreMediaType === 'MANGA') {
+            item.consumedVia = 'manga';
+          }
+          return item;
+        });
     }
 
     function initExploreStream() {
-      exploreStreamItems = JSON.parse(JSON.stringify(masterCatalog));
+      exploreApiPage = 1;
+      exploreStreamItems = getSeedCatalogForCurrentExploreFilter();
       renderExploreStreamGrid();
-      batchFetchCoversFromAniList(exploreStreamItems);
+      if (exploreStreamItems.length > 0) {
+        batchFetchCoversFromAniList(exploreStreamItems);
+      }
       loadNextExploreBatchFromApi();
     }
 
@@ -2174,25 +2348,30 @@
           btn.className = 'px-3.5 py-1 rounded-full text-xs font-bold text-md-onSurfaceVariant';
         }
       });
+
+      isExploreLoading = false;
+      exploreApiPage = 1;
+
       if (exploreSearchQuery) {
         executeExploreSearch();
       } else {
+        // 選んだボタン（すべて / アニメ / 漫画）に合わせて候補リストを再構成・APIから取得
+        exploreStreamItems = getSeedCatalogForCurrentExploreFilter();
         renderExploreStreamGrid();
-        // フィルタ切り替え後に表示件数が少ない場合は自動で次ページを補充
-        const visibleCount = getFilteredExploreItems().length;
-        if (visibleCount < 12) {
-          loadNextExploreBatchFromApi();
-        }
+        loadNextExploreBatchFromApi();
       }
     }
 
-    function selectExploreCategory(cat) {
-      exploreCategory = cat;
-      document.querySelectorAll('#explore-genre-chips button').forEach(btn => {
-        btn.classList.toggle('selected', btn.getAttribute('data-cat') === cat);
-      });
-      renderExploreStreamGrid();
-      if (!exploreSearchQuery && getFilteredExploreItems().length < 12) {
+    function setExploreEraFilter(eraValue) {
+      exploreEraFilter = eraValue || 'ALL';
+      isExploreLoading = false;
+      exploreApiPage = 1;
+
+      if (exploreSearchQuery) {
+        executeExploreSearch();
+      } else {
+        exploreStreamItems = getSeedCatalogForCurrentExploreFilter();
+        renderExploreStreamGrid();
         loadNextExploreBatchFromApi();
       }
     }
@@ -2221,20 +2400,23 @@
       if (loadMoreContainer) loadMoreContainer.classList.add('hidden');
 
       const grid = document.getElementById('explore-stream-grid');
+      const eraRange = getEraDateRange(exploreEraFilter);
+      const eraLabel = eraRange ? `（${eraRange.label}）` : '';
       if (grid) {
-        grid.innerHTML = `<div class="col-span-full p-10 text-center text-sm font-bold text-md-onSurfaceVariant">『${escapeHtmlAttr(q)}』を検索しています...</div>`;
+        grid.innerHTML = `<div class="col-span-full p-10 text-center text-sm font-bold text-md-onSurfaceVariant">『${escapeHtmlAttr(q)}』${eraLabel}を検索しています...</div>`;
       }
 
       const typeFilter = exploreMediaType === 'ALL' ? '' : `, type: ${exploreMediaType}`;
+      const dateFilter = eraRange ? `, startDate_greater: ${eraRange.greater}, startDate_lesser: ${eraRange.lesser}` : '';
       const query = `
         query ($search: String) {
           Page(page: 1, perPage: 45) {
-            media(search: $search ${typeFilter}, sort: POPULARITY_DESC, isAdult: false) {
+            media(search: $search ${typeFilter} ${dateFilter}, sort: POPULARITY_DESC, isAdult: false) {
               id
               type
               format
+              startDate { year }
               title { native romaji }
-              genres
               coverImage { large }
             }
           }
@@ -2258,18 +2440,24 @@
             const sKey = normalizeTitleKey(canonicalTitle);
             if (!sKey) return;
 
+            const startYear = m.startDate?.year || null;
             const cover = m.coverImage?.large || '';
             const animeCover = m.type === 'ANIME' ? cover : (coverCache[sKey]?.anime || '');
             const mangaCover = m.type === 'MANGA' ? cover : (coverCache[sKey]?.manga || '');
 
             if (animeCover || mangaCover) {
               const entry = {
-                anime: animeCover || coverCache[sKey]?.anime || mangaCover,
-                manga: mangaCover || coverCache[sKey]?.manga || animeCover
+                anime: animeCover || coverCache[sKey]?.anime || '',
+                manga: mangaCover || coverCache[sKey]?.manga || ''
               };
               coverCache[sKey] = entry;
               coverCache[m.id] = entry;
             }
+
+            const defaultVia = exploreMediaType === 'MANGA'
+              ? 'manga'
+              : (exploreMediaType === 'ANIME' ? 'anime' : (m.type === 'MANGA' ? 'manga' : 'anime'));
+            const yearPrefix = startYear ? `${startYear}年 • ` : '';
 
             if (!seriesGroups.has(sKey)) {
               seriesGroups.set(sKey, {
@@ -2277,26 +2465,30 @@
                 anilistId: m.id,
                 title: canonicalTitle,
                 searchTitle: canonicalTitle,
+                startYear,
                 media: m.type === 'MANGA' ? '漫画' : 'アニメ',
-                consumedVia: m.type === 'MANGA' ? 'manga' : 'anime',
+                consumedVia: defaultVia,
                 progressState: 'completed',
                 progressNote: '',
-                genre: mapAnilistGenresToJp(m.genres),
                 status: 'none',
                 comment: '',
-                sub: m.type === 'MANGA' ? '原作コミックス（全巻統合）' : 'シリーズ統合（1期〜最新・劇場版含む）',
+                sub: m.type === 'MANGA' ? `${yearPrefix}原作コミックス` : `${yearPrefix}シリーズ統合`,
                 imageUrl: animeCover || mangaCover || cover,
                 animeImageUrl: animeCover,
                 mangaImageUrl: mangaCover
               });
             } else {
               const existingGroup = seriesGroups.get(sKey);
+              if (startYear && (!existingGroup.startYear || startYear < existingGroup.startYear)) {
+                existingGroup.startYear = startYear;
+              }
               if (m.type === 'MANGA' && existingGroup.media === 'アニメ') {
                 existingGroup.media = 'アニメ・漫画';
               } else if (m.type === 'ANIME' && existingGroup.media === '漫画') {
                 existingGroup.media = 'アニメ・漫画';
-                existingGroup.consumedVia = 'anime';
-                existingGroup.sub = 'シリーズ統合（1期〜最新・劇場版・原作含む）';
+                if (exploreMediaType !== 'MANGA') {
+                  existingGroup.consumedVia = 'anime';
+                }
               }
               if (!existingGroup.animeImageUrl && animeCover) existingGroup.animeImageUrl = animeCover;
               if (!existingGroup.mangaImageUrl && mangaCover) existingGroup.mangaImageUrl = mangaCover;
@@ -2323,8 +2515,8 @@
       const loadMoreContainer = document.getElementById('explore-load-more-container');
       if (loadMoreContainer) loadMoreContainer.classList.remove('hidden');
 
-      exploreStreamItems = JSON.parse(JSON.stringify(masterCatalog));
       exploreApiPage = 1;
+      exploreStreamItems = getSeedCatalogForCurrentExploreFilter();
       renderExploreStreamGrid();
       loadNextExploreBatchFromApi();
     }
@@ -2335,24 +2527,27 @@
       const btn = document.getElementById('explore-load-more-btn');
       if (btn) btn.textContent = '読み込み中...';
 
+      const eraRange = getEraDateRange(exploreEraFilter);
+      const dateFilter = eraRange ? `, startDate_greater: ${eraRange.greater}, startDate_lesser: ${eraRange.lesser}` : '';
+
       const queryAll = `
         query ($page: Int) {
-          animePage: Page(page: $page, perPage: 32) {
-            media(type: ANIME, sort: POPULARITY_DESC, isAdult: false) {
+          animePage: Page(page: $page, perPage: 28) {
+            media(type: ANIME ${dateFilter}, sort: POPULARITY_DESC, isAdult: false) {
               id
               type
               format
+              startDate { year }
               title { native romaji }
-              genres
               coverImage { large }
             }
           }
           mangaPage: Page(page: $page, perPage: 24) {
-            media(type: MANGA, sort: POPULARITY_DESC, isAdult: false) {
+            media(type: MANGA ${dateFilter}, sort: POPULARITY_DESC, isAdult: false) {
               id
               type
+              startDate { year }
               title { native romaji }
-              genres
               coverImage { large }
             }
           }
@@ -2361,13 +2556,13 @@
 
       const querySingle = `
         query ($page: Int, $type: MediaType) {
-          Page(page: $page, perPage: 40) {
-            media(type: $type, sort: POPULARITY_DESC, isAdult: false) {
+          Page(page: $page, perPage: 42) {
+            media(type: $type ${dateFilter}, sort: POPULARITY_DESC, isAdult: false) {
               id
               type
               format
+              startDate { year }
               title { native romaji }
-              genres
               coverImage { large }
             }
           }
@@ -2410,22 +2605,26 @@
             const tKey = normalizeTitleKey(canonicalTitle);
             if (!tKey) return;
 
+            const startYear = m.startDate?.year || null;
             const cover = m.coverImage?.large || '';
             const animeCover = m.type === 'ANIME' ? cover : (coverCache[tKey]?.anime || '');
             const mangaCover = m.type === 'MANGA' ? cover : (coverCache[tKey]?.manga || '');
 
             if (animeCover || mangaCover) {
               const entry = {
-                anime: animeCover || coverCache[tKey]?.anime || mangaCover,
-                manga: mangaCover || coverCache[tKey]?.manga || animeCover
+                anime: animeCover || coverCache[tKey]?.anime || '',
+                manga: mangaCover || coverCache[tKey]?.manga || ''
               };
               coverCache[tKey] = entry;
               coverCache[m.id] = entry;
             }
 
             // 既に同じシリーズ作品が探索リストに存在する場合は画像と媒体情報を補完して統合
-            const existingSeriesItem = exploreStreamItems.find(existing => getSeriesKey(existing) === tKey);
+            const existingSeriesItem = exploreStreamItems.find(existing => isSameWorkOrSeries(existing, { title: canonicalTitle }));
             if (existingSeriesItem) {
+              if (startYear && !existingSeriesItem.startYear) {
+                existingSeriesItem.startYear = startYear;
+              }
               if (m.type === 'MANGA' && existingSeriesItem.media === 'アニメ') {
                 existingSeriesItem.media = 'アニメ・漫画';
               } else if (m.type === 'ANIME' && existingSeriesItem.media === '漫画') {
@@ -2442,19 +2641,24 @@
               return;
             }
 
+            const defaultVia = exploreMediaType === 'MANGA'
+              ? 'manga'
+              : (exploreMediaType === 'ANIME' ? 'anime' : (m.type === 'MANGA' ? 'manga' : 'anime'));
+            const yearPrefix = startYear ? `${startYear}年 • ` : '';
+
             exploreStreamItems.push({
               id: m.id,
               anilistId: m.id,
               title: canonicalTitle,
               searchTitle: canonicalTitle,
+              startYear,
               media: m.type === 'MANGA' ? '漫画' : 'アニメ',
-              consumedVia: m.type === 'MANGA' ? 'manga' : 'anime',
+              consumedVia: defaultVia,
               progressState: 'completed',
               progressNote: '',
-              genre: mapAnilistGenresToJp(m.genres),
               status: 'none',
               comment: '',
-              sub: m.type === 'MANGA' ? '原作コミックス（全巻統合）' : 'シリーズ統合（1期〜最新・劇場版含む）',
+              sub: m.type === 'MANGA' ? `${yearPrefix}原作コミックス` : `${yearPrefix}シリーズ統合`,
               imageUrl: animeCover || mangaCover || cover,
               animeImageUrl: animeCover,
               mangaImageUrl: mangaCover
@@ -2495,6 +2699,7 @@
       const existing = targetWorks.find(w => isSameWorkOrSeries(w, item));
       const status = existing ? existing.status : 'none';
       const via = existing ? ensureConsumedVia(existing) : (item.consumedVia || 'anime');
+      const viaMeta = getConsumedViaMeta(via);
       const prog = existing ? ensureProgressState(existing) : (item.progressState || 'completed');
       const isRegistered = status !== 'none';
       const cover = getWorkDisplayImage(existing || item);
@@ -2502,23 +2707,26 @@
       const isMangaStyle = via === 'manga';
 
       return `
-        <div class="relative aspect-[2/3] rounded-xl overflow-hidden bg-md-surfaceContainerHigh mb-2.5 border border-md-outlineVariant/50 ${isMangaStyle ? 'comic-book-cover' : ''}">
+        <!-- ぱっと見で媒体がわかる上部カラーバー -->
+        <div class="mb-1.5 px-2.5 py-1 rounded-lg ${viaMeta.headerBarClass} flex items-center justify-between text-[10px] font-extrabold tracking-wide">
+          <span>${viaMeta.label}</span>
+          <span>${isRegistered ? '登録済 ✓' : viaMeta.shortTag}</span>
+        </div>
+
+        <div class="relative aspect-[2/3] rounded-xl overflow-hidden bg-md-surfaceContainerHigh mb-2.5 ${viaMeta.cardBorderClass} ${isMangaStyle ? 'comic-book-cover' : ''}">
           <img src="${cover}" alt="${escapeHtmlAttr(item.title)}" loading="lazy" onerror="this.src='${fallback}'" class="w-full h-full object-cover">
-          <span class="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-md-inverseSurface/85 text-md-inverseOnSurface text-[10px] font-bold">
-            ${escapeHtmlAttr(item.genre || 'アニメ・漫画')}
-          </span>
-          ${isRegistered ? `<span class="absolute top-2 right-2 px-2 py-0.5 rounded-md bg-md-primary text-md-onPrimary text-[10px] font-extrabold">登録済</span>` : ''}
-          ${isMangaStyle ? `<div class="absolute bottom-0 inset-x-0 bg-md-tertiary text-md-onTertiary text-[9px] font-extrabold text-center py-0.5 tracking-wider">COMICS • 単行本</div>` : ''}
+          ${isMangaStyle ? `<div class="absolute bottom-0 inset-x-0 bg-[#8F2456] text-white text-[9px] font-extrabold text-center py-0.5 tracking-wider">COMICS • 単行本カバー</div>` : ''}
+          ${via === 'both' ? `<div class="absolute bottom-0 inset-x-0 bg-[#0D6B58] text-white text-[9px] font-extrabold text-center py-0.5 tracking-wider">ANIME & MANGA • 両刀</div>` : ''}
         </div>
 
         <h4 class="font-bold text-xs text-md-onSurface line-clamp-1 mb-0.5" title="${escapeHtmlAttr(item.title)}">${escapeHtmlAttr(item.title)}</h4>
-        <p class="text-[11px] text-md-onSurfaceVariant line-clamp-1 mb-2">${escapeHtmlAttr(item.sub || 'アニメ / 漫画')}</p>
+        <p class="text-[11px] text-md-onSurfaceVariant line-clamp-1 mb-2">${escapeHtmlAttr(item.sub || viaMeta.subText)}</p>
 
         <div class="mt-auto space-y-1.5">
           <div class="grid grid-cols-3 gap-1">
-            <button onclick="setExploreItemVia(${item.id}, 'anime')" class="py-1 rounded-md text-[10px] font-bold border ${via === 'anime' ? 'bg-md-primaryContainer text-md-onPrimaryContainer border-md-primary' : 'bg-md-surfaceContainerLow text-md-onSurfaceVariant border-md-outlineVariant'}">アニメ</button>
-            <button onclick="setExploreItemVia(${item.id}, 'manga')" class="py-1 rounded-md text-[10px] font-bold border ${via === 'manga' ? 'bg-md-tertiaryContainer text-md-onTertiaryContainer border-md-tertiary' : 'bg-md-surfaceContainerLow text-md-onSurfaceVariant border-md-outlineVariant'}">漫画</button>
-            <button onclick="setExploreItemVia(${item.id}, 'both')" class="py-1 rounded-md text-[10px] font-bold border ${via === 'both' ? 'bg-md-secondaryContainer text-md-onSecondaryContainer border-md-secondary' : 'bg-md-surfaceContainerLow text-md-onSurfaceVariant border-md-outlineVariant'}">両方</button>
+            <button onclick="setExploreItemVia(${item.id}, 'anime')" class="py-1 rounded-md text-[10px] font-extrabold border ${via === 'anime' ? 'bg-[#2E45B8] text-white border-[#2E45B8]' : 'bg-md-surfaceContainerLow text-md-onSurfaceVariant border-md-outlineVariant'}">アニメ</button>
+            <button onclick="setExploreItemVia(${item.id}, 'manga')" class="py-1 rounded-md text-[10px] font-extrabold border ${via === 'manga' ? 'bg-[#8F2456] text-white border-[#8F2456]' : 'bg-md-surfaceContainerLow text-md-onSurfaceVariant border-md-outlineVariant'}">漫画</button>
+            <button onclick="setExploreItemVia(${item.id}, 'both')" class="py-1 rounded-md text-[10px] font-extrabold border ${via === 'both' ? 'bg-[#0D6B58] text-white border-[#0D6B58]' : 'bg-md-surfaceContainerLow text-md-onSurfaceVariant border-md-outlineVariant'}">両刀</button>
           </div>
           <div class="grid grid-cols-3 gap-1">
             <button onclick="setExploreItemProgress(${item.id}, 'completed')" class="py-1 rounded-md text-[10px] font-bold border ${prog === 'completed' ? 'bg-teal-100 text-teal-950 border-teal-600' : 'bg-md-surfaceContainerLow text-md-onSurfaceVariant border-md-outlineVariant'}">完走</button>
@@ -2550,16 +2758,20 @@
     function getFilteredExploreItems() {
       const hideRegistered = document.getElementById('explore-hide-registered')?.checked;
       const targetWorks = getEditableWorksList();
+      const eraRange = getEraDateRange(exploreEraFilter);
 
       return exploreStreamItems.filter(item => {
         if (exploreMediaType === 'ANIME') {
-          const isAnime = String(item.media || '').includes('アニメ') || item.consumedVia === 'anime' || item.consumedVia === 'both';
+          const isAnime = String(item.media || '').includes('アニメ') || item.consumedVia === 'anime';
           if (!isAnime) return false;
         } else if (exploreMediaType === 'MANGA') {
-          const isManga = String(item.media || '').includes('漫画') || item.consumedVia === 'manga' || item.consumedVia === 'both';
+          const isManga = String(item.media || '').includes('漫画') || item.consumedVia === 'manga';
           if (!isManga) return false;
         }
-        if (exploreCategory !== 'ALL' && item.genre !== exploreCategory) return false;
+        if (eraRange && item.startYear) {
+          const y = Number(item.startYear);
+          if (y < eraRange.minYear || y > eraRange.maxYear) return false;
+        }
         if (hideRegistered) {
           const ex = targetWorks.find(w => isSameWorkOrSeries(w, item));
           if (ex && ex.status !== 'none') return false;
@@ -2695,7 +2907,7 @@
         cardWidthClass = 'w-[228px] sm:w-[248px] p-3 rounded-2xl bg-md-primaryContainer/45 ring-2 ring-md-primary';
       }
 
-      let posterBorderClass = 'border-md-outlineVariant';
+      let posterBorderClass = viaMeta.cardBorderClass;
       if (isGoldHighlight) {
         posterBorderClass = 'gold-medal-poster';
       } else if (isSharedHighlight) {
@@ -2720,7 +2932,26 @@
               <span>MATCH</span>
             </div>
           ` : '')}
-          <div class="relative aspect-[2/3] w-full rounded-2xl overflow-hidden bg-md-surfaceContainerHigh mb-2.5 border ${posterBorderClass} ${isMangaStyle ? 'comic-book-cover' : ''}">
+
+          <!-- ぱっと見でアニメ派・漫画派・両刀が判別できる最上部フル幅バー -->
+          ${editable ? `
+            <button
+              type="button"
+              onclick="cycleConsumedVia(${w.id}, event)"
+              title="クリックでアニメ派 / 漫画・原作派 / 両刀を切り替え"
+              class="mb-1.5 w-full px-2.5 py-1 rounded-lg ${viaMeta.headerBarClass} flex items-center justify-between text-[11px] font-extrabold tracking-wide"
+            >
+              <span>${viaMeta.label}</span>
+              <span class="text-[10px] opacity-90">切替 ↻</span>
+            </button>
+          ` : `
+            <div class="mb-1.5 w-full px-2.5 py-1 rounded-lg ${viaMeta.headerBarClass} flex items-center justify-between text-[11px] font-extrabold tracking-wide">
+              <span>${viaMeta.label}</span>
+              <span class="text-[10px] opacity-90">${viaMeta.shortTag}</span>
+            </div>
+          `}
+
+          <div class="relative aspect-[2/3] w-full rounded-2xl overflow-hidden bg-md-surfaceContainerHigh mb-2.5 ${posterBorderClass} ${isMangaStyle ? 'comic-book-cover' : ''}">
             <img
               src="${cover}"
               alt="${escapeHtmlAttr(w.title)}"
@@ -2728,20 +2959,6 @@
               onerror="this.src='${fallback}'"
               class="w-full h-full object-cover"
             >
-
-            ${editable ? `
-              <button
-                onclick="cycleConsumedVia(${w.id}, event)"
-                title="クリックでアニメ派 / 漫画派 / 両刀を切り替え"
-                class="absolute top-2.5 left-2.5 px-2.5 py-1 rounded-md text-[11px] font-bold border ${viaMeta.pillClass} z-10"
-              >
-                ${viaMeta.label} ↻
-              </button>
-            ` : `
-              <span class="absolute top-2.5 left-2.5 px-2.5 py-1 rounded-md text-[11px] font-bold border ${viaMeta.pillClass} z-10">
-                ${viaMeta.label}
-              </span>
-            `}
 
             ${editable ? `
               <button
@@ -2767,19 +2984,25 @@
               <button
                 onclick="cycleProgressState(${w.id}, event)"
                 title="クリックで完走 / 途中まで / 1期・序盤のみを切り替え"
-                class="absolute ${isMangaStyle ? 'bottom-6' : 'bottom-2'} left-2 right-2 px-2 py-1 rounded-md text-[10px] font-extrabold border truncate text-center ${progMeta.pillClass} z-10"
+                class="absolute ${(isMangaStyle || via === 'both') ? 'bottom-6' : 'bottom-2'} left-2 right-2 px-2 py-1 rounded-md text-[10px] font-extrabold border truncate text-center ${progMeta.pillClass} z-10"
               >
                 ${escapeHtmlAttr(progMeta.badgeLabel)} ↻
               </button>
             ` : `
-              <div class="absolute ${isMangaStyle ? 'bottom-6' : 'bottom-2'} left-2 right-2 px-2 py-1 rounded-md text-[10px] font-extrabold border truncate text-center ${progMeta.pillClass} z-10">
+              <div class="absolute ${(isMangaStyle || via === 'both') ? 'bottom-6' : 'bottom-2'} left-2 right-2 px-2 py-1 rounded-md text-[10px] font-extrabold border truncate text-center ${progMeta.pillClass} z-10">
                 ${escapeHtmlAttr(progMeta.badgeLabel)}
               </div>
             `) : ''}
 
             ${isMangaStyle ? `
-              <div class="absolute bottom-0 inset-x-0 bg-md-tertiary text-md-onTertiary text-[10px] font-extrabold text-center py-0.5 tracking-wider z-10">
+              <div class="absolute bottom-0 inset-x-0 bg-[#8F2456] text-white text-[10px] font-extrabold text-center py-0.5 tracking-wider z-10">
                 COMICS • 原作単行本カバー
+              </div>
+            ` : ''}
+
+            ${via === 'both' ? `
+              <div class="absolute bottom-0 inset-x-0 bg-[#0D6B58] text-white text-[10px] font-extrabold text-center py-0.5 tracking-wider z-10">
+                ANIME & COMICS • 両方履修
               </div>
             ` : ''}
           </div>
@@ -2789,37 +3012,39 @@
           </h3>
 
           <div class="flex items-center gap-1.5 mt-0.5 flex-wrap">
-            <p class="text-xs text-md-onSurfaceVariant line-clamp-1 font-medium">
-              ${viaMeta.subText} ・ ${escapeHtmlAttr(w.genre)}
+            <p class="text-xs text-md-onSurfaceVariant line-clamp-1 font-bold">
+              ${viaMeta.subText}
             </p>
           </div>
 
-          <!-- 5段階の星評価バー（自分のプロフィールではクリックで直接変更可能） -->
-          <div class="mt-1.5 flex items-center justify-between px-2 py-1 rounded-lg bg-md-surfaceContainerLow border border-md-outlineVariant/60">
-            ${editable ? `
-              <div class="flex items-center gap-0.5" title="クリックで★1〜★5の評価を設定（同じ星を再クリックで解除）">
-                ${[1, 2, 3, 4, 5].map(star => `
-                  <button
-                    type="button"
-                    onclick="setWorkRating(${w.id}, ${star}, event)"
-                    class="text-sm leading-none px-0.5 font-extrabold ${star <= rating ? 'text-amber-600' : 'text-md-outlineVariant hover:text-amber-500'}"
-                  >★</button>
-                `).join('')}
-              </div>
-              <span class="text-[10px] font-extrabold ${rating > 0 ? 'text-amber-900' : 'text-md-onSurfaceVariant'}">
-                ${rating > 0 ? `★${rating}.0` : '未評価'}
-              </span>
-            ` : `
-              <div class="flex items-center gap-0.5">
-                ${[1, 2, 3, 4, 5].map(star => `
-                  <span class="text-xs leading-none font-extrabold ${star <= rating ? 'text-amber-600' : 'text-md-outlineVariant'}">★</span>
-                `).join('')}
-              </div>
-              <span class="text-[10px] font-extrabold ${rating > 0 ? 'text-amber-900' : 'text-md-onSurfaceVariant'}">
-                ${rating > 0 ? `★${rating}.0` : '未評価'}
-              </span>
-            `}
-          </div>
+          <!-- 5段階の星評価バー（「気になってる」以外の作品のみ表示） -->
+          ${w.status !== 'curious' ? `
+            <div class="mt-1.5 flex items-center justify-between px-2 py-1 rounded-lg bg-md-surfaceContainerLow border border-md-outlineVariant/60">
+              ${editable ? `
+                <div class="flex items-center gap-0.5" title="クリックで★1〜★5の評価を設定（同じ星を再クリックで解除）">
+                  ${[1, 2, 3, 4, 5].map(star => `
+                    <button
+                      type="button"
+                      onclick="setWorkRating(${w.id}, ${star}, event)"
+                      class="text-sm leading-none px-0.5 font-extrabold ${star <= rating ? 'text-amber-600' : 'text-md-outlineVariant hover:text-amber-500'}"
+                    >★</button>
+                  `).join('')}
+                </div>
+                <span class="text-[10px] font-extrabold ${rating > 0 ? 'text-amber-900' : 'text-md-onSurfaceVariant'}">
+                  ${rating > 0 ? `★${rating}.0` : '未評価'}
+                </span>
+              ` : `
+                <div class="flex items-center gap-0.5">
+                  ${[1, 2, 3, 4, 5].map(star => `
+                    <span class="text-xs leading-none font-extrabold ${star <= rating ? 'text-amber-600' : 'text-md-outlineVariant'}">★</span>
+                  `).join('')}
+                </div>
+                <span class="text-[10px] font-extrabold ${rating > 0 ? 'text-amber-900' : 'text-md-onSurfaceVariant'}">
+                  ${rating > 0 ? `★${rating}.0` : '未評価'}
+                </span>
+              `}
+            </div>
+          ` : ''}
 
           ${w.comment ? `
             <div class="mt-2 px-2.5 py-1.5 rounded-xl bg-md-surfaceContainer border border-md-outlineVariant/60">
@@ -3087,9 +3312,9 @@
 
       const sharedTierMap = renderSharedWorksShowcase();
 
-      const loveItems = registered.filter(w => w.status === 'love' && filterWorkByHomeChip(w));
-      const curiousItems = registered.filter(w => w.status === 'curious' && filterWorkByHomeChip(w));
-      const watchedItems = registered.filter(w => w.status === 'watched' && filterWorkByHomeChip(w));
+      const loveItems = sortProfileWorksList(registered.filter(w => w.status === 'love' && filterWorkByHomeChip(w)));
+      const curiousItems = sortProfileWorksList(registered.filter(w => w.status === 'curious' && filterWorkByHomeChip(w)));
+      const watchedItems = sortProfileWorksList(registered.filter(w => w.status === 'watched' && filterWorkByHomeChip(w)));
 
       document.getElementById('count-love').textContent = loveItems.length;
       document.getElementById('count-curious').textContent = curiousItems.length;
@@ -3150,18 +3375,20 @@
               </div>
 
               <div class="space-y-1.5 pt-2">
-                <div class="flex items-center justify-between px-2 py-1 rounded-lg bg-md-surfaceContainerLow border border-md-outlineVariant">
-                  <span class="text-[10px] font-bold text-md-onSurfaceVariant">評価</span>
-                  <div class="flex items-center gap-1">
-                    ${[1, 2, 3, 4, 5].map(star => `
-                      <button
-                        type="button"
-                        onclick="setWorkRating(${w.id}, ${star}, event)"
-                        class="text-xs font-extrabold px-1 rounded ${star <= rating ? 'text-amber-600 bg-amber-50' : 'text-md-outlineVariant'}"
-                      >★${star}</button>
-                    `).join('')}
+                ${w.status !== 'curious' ? `
+                  <div class="flex items-center justify-between px-2 py-1 rounded-lg bg-md-surfaceContainerLow border border-md-outlineVariant">
+                    <span class="text-[10px] font-bold text-md-onSurfaceVariant">評価</span>
+                    <div class="flex items-center gap-1">
+                      ${[1, 2, 3, 4, 5].map(star => `
+                        <button
+                          type="button"
+                          onclick="setWorkRating(${w.id}, ${star}, event)"
+                          class="text-xs font-extrabold px-1 rounded ${star <= rating ? 'text-amber-600 bg-amber-50' : 'text-md-outlineVariant'}"
+                        >★${star}</button>
+                      `).join('')}
+                    </div>
                   </div>
-                </div>
+                ` : ''}
                 <div class="grid grid-cols-3 gap-1">
                   <button onclick="setWorkConsumedVia(${w.id}, 'anime')" class="py-1 rounded text-[10px] font-bold border ${via === 'anime' ? 'bg-md-primaryContainer text-md-onPrimaryContainer border-md-primary' : 'bg-md-surfaceContainerLow text-md-onSurfaceVariant border-md-outlineVariant'}">アニメ派</button>
                   <button onclick="setWorkConsumedVia(${w.id}, 'manga')" class="py-1 rounded text-[10px] font-bold border ${via === 'manga' ? 'bg-md-tertiaryContainer text-md-onTertiaryContainer border-md-tertiary' : 'bg-md-surfaceContainerLow text-md-onSurfaceVariant border-md-outlineVariant'}">漫画・原作派</button>
@@ -3272,6 +3499,10 @@
       selectModalProgressState(ensureProgressState(w));
       modalTempRating = 0;
       selectModalRating(ensureRating(w));
+      const ratingSection = document.getElementById('comment-modal-rating-section');
+      if (ratingSection) {
+        ratingSection.classList.toggle('hidden', w.status === 'curious');
+      }
       document.getElementById('comment-modal').classList.remove('hidden');
       setTimeout(() => document.getElementById('comment-modal-progress-note').focus(), 50);
     }
