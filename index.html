@@ -224,9 +224,9 @@
 
       <!-- 右側アクションボタン群 -->
       <div class="flex items-center gap-2 shrink-0">
-        <span id="cloud-sync-indicator" class="px-3 py-1 rounded-full text-[11px] font-bold bg-md-surfaceContainerHigh text-md-onSurfaceVariant">
+        <button onclick="openCloudDiagModal()" id="cloud-sync-indicator" title="クリックでクラウド同期の詳細・診断を表示" class="m3-state-layer px-3 py-1 rounded-full text-[11px] font-bold bg-md-surfaceContainerHigh text-md-onSurfaceVariant cursor-pointer">
           接続準備中
-        </span>
+        </button>
         <span id="header-permission-pill" class="px-3 py-1 rounded-full text-xs font-extrabold bg-md-secondaryContainer text-md-onSecondaryContainer">
           ゲスト閲覧中
         </span>
@@ -704,6 +704,57 @@
   </div>
 
   <!-- ========================================== -->
+  <!-- MODAL 4.5: クラウド同期診断・ステータスモーダル -->
+  <!-- ========================================== -->
+  <div id="cloud-diag-modal" class="fixed inset-0 z-50 hidden bg-black/50 flex items-center justify-center p-4">
+    <div class="bg-md-surfaceContainerHigh border border-md-outlineVariant rounded-[28px] max-w-lg w-full p-6 space-y-4 shadow-xl">
+      <div class="flex items-center justify-between">
+        <h3 class="font-extrabold text-base text-md-onSurface">クラウド同期ステータス・接続診断</h3>
+        <button onclick="closeCloudDiagModal()" class="text-md-onSurfaceVariant text-sm font-bold">✕</button>
+      </div>
+
+      <div class="p-4 rounded-2xl bg-md-surfaceContainerLowest border border-md-outlineVariant space-y-2 text-xs">
+        <div class="flex items-center justify-between">
+          <span class="font-bold text-md-onSurfaceVariant">接続先プロジェクトID</span>
+          <span class="font-extrabold text-md-onSurface">animanga-shere-73798</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="font-bold text-md-onSurfaceVariant">現在のアクセス元ドメイン</span>
+          <span id="diag-current-domain" class="font-extrabold text-md-primary">---</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="font-bold text-md-onSurfaceVariant">Firebase認証 (Auth)</span>
+          <span id="diag-auth-status" class="font-extrabold">確認中...</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="font-bold text-md-onSurfaceVariant">Firestoreデータベース通信</span>
+          <span id="diag-db-status" class="font-extrabold">確認中...</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="font-bold text-md-onSurfaceVariant">クラウド上の検出プロフィール数</span>
+          <span id="diag-cloud-count" class="font-extrabold text-md-onSurface">0件</span>
+        </div>
+      </div>
+
+      <div id="diag-guide-box" class="p-3.5 rounded-2xl bg-amber-50 border border-amber-300 text-amber-950 text-xs space-y-1.5 leading-relaxed">
+        <p class="font-extrabold">他の人のプロフィールが表示されない場合のチェックポイント：</p>
+        <p id="diag-guide-text" class="text-[11px]">
+          GitHub Pages等で公開している場合、Firebaseコンソールの「Firestore Database ＞ ルール」で読み書きが許可されているかご確認ください。
+        </p>
+      </div>
+
+      <div class="flex flex-wrap justify-end gap-2 pt-1">
+        <button onclick="if(window.__manualCloudSync) window.__manualCloudSync()" class="m3-state-layer h-10 px-5 rounded-full bg-md-primary text-md-onPrimary text-xs font-extrabold">
+          今すぐ強制同期（送受信）を実行
+        </button>
+        <button onclick="closeCloudDiagModal()" class="h-10 px-4 rounded-full text-xs font-bold text-md-onSurfaceVariant">
+          閉じる
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
   <!-- MODAL 5: 一言コメント・進捗編集モーダル -->
   <!-- ========================================== -->
   <div id="comment-modal" class="fixed inset-0 z-50 hidden bg-black/50 flex items-center justify-center p-4">
@@ -946,6 +997,90 @@
         }
       }
     }
+
+    function openCloudDiagModal() {
+      const domainEl = document.getElementById('diag-current-domain');
+      if (domainEl) domainEl.textContent = window.location.hostname || 'ローカル / プレビュー';
+      document.getElementById('cloud-diag-modal').classList.remove('hidden');
+      if (typeof window.__refreshDiagModal === 'function') {
+        window.__refreshDiagModal();
+      }
+    }
+
+    function closeCloudDiagModal() {
+      document.getElementById('cloud-diag-modal').classList.add('hidden');
+    }
+
+    // クラウドモジュールとメインスクリプト間の確実なデータ受け渡しブリッジ
+    window.__getLocalSyncState = function() {
+      return {
+        accounts: Array.isArray(accounts) ? accounts : [],
+        profiles: Array.isArray(profiles) ? profiles : [],
+        deletedProfileIds: Array.isArray(deletedProfileIds) ? deletedProfileIds : [],
+        loggedInAccountId
+      };
+    };
+
+    window.__receiveCloudProfiles = function(remoteAccounts, remoteProfiles, removedIds = []) {
+      if (Array.isArray(removedIds) && removedIds.length > 0) {
+        accounts = accounts.filter(a => a && !removedIds.includes(a.id));
+        profiles = profiles.filter(p => p && !removedIds.includes(p.id));
+      }
+
+      const mergedAccountsMap = new Map();
+      accounts.forEach(a => {
+        if (a && a.id && !deletedProfileIds.includes(a.id)) {
+          mergedAccountsMap.set(a.id, a);
+        }
+      });
+      (remoteAccounts || []).forEach(a => {
+        if (a && a.id && !deletedProfileIds.includes(a.id)) {
+          const existing = mergedAccountsMap.get(a.id);
+          // クラウド側にパスワードがありローカルが空なら補完、または上書き
+          mergedAccountsMap.set(a.id, {
+            ...existing,
+            ...a,
+            passwordHash: a.passwordHash || existing?.passwordHash || ''
+          });
+        }
+      });
+      accounts = Array.from(mergedAccountsMap.values());
+
+      const mergedProfilesMap = new Map();
+      profiles.forEach(p => {
+        if (p && p.id && !deletedProfileIds.includes(p.id)) {
+          mergedProfilesMap.set(p.id, p);
+        }
+      });
+      (remoteProfiles || []).forEach(p => {
+        if (p && p.id && !deletedProfileIds.includes(p.id)) {
+          mergedProfilesMap.set(p.id, p);
+        }
+      });
+      profiles = Array.from(mergedProfilesMap.values());
+
+      try {
+        localStorage.setItem(STORAGE_KEY_STATE, JSON.stringify({ accounts, profiles }));
+      } catch (e) {}
+
+      const params = new URLSearchParams(window.location.search);
+      const urlUser = params.get('user');
+      if (urlUser && profiles.some(p => p.id === urlUser)) {
+        activeProfileId = urlUser;
+      } else if (!activeProfileId || !profiles.some(p => p.id === activeProfileId)) {
+        activeProfileId = (loggedInAccountId && profiles.some(p => p.id === loggedInAccountId))
+          ? loggedInAccountId
+          : (profiles[0]?.id || null);
+      }
+
+      syncActiveProfileWorks();
+      renderAll();
+      if (currentTab === 'seasonal') renderSeasonalMainGrid();
+      if (currentTab === 'edit') renderExploreStreamGrid();
+      if (currentTab === 'library') renderEditorGrid();
+      if (works.length > 0) batchFetchCoversFromAniList(works);
+      return profiles.length;
+    };
 
     function openDeleteProfileModal(profileId, event) {
       if (event) event.stopPropagation();
@@ -3148,10 +3283,9 @@
   <!-- ==================================================== -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc, deleteDoc, getDocs, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { initializeFirestore, doc, setDoc, deleteDoc, getDocs, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    // 本番用 Firebase コンフィグ（全端末で同じプロジェクト・コレクションを参照するよう固定）
     const userFirebaseConfig = {
       apiKey: "AIzaSyDR7QH6eNa4E--SN_wyDLSWLM4mexVJPbY",
       authDomain: "animanga-shere-73798.firebaseapp.com",
@@ -3162,12 +3296,44 @@
     };
 
     const indicator = document.getElementById('cloud-sync-indicator');
+    const diagState = {
+      authOk: false,
+      authMsg: '未確認',
+      dbOk: false,
+      dbMsg: '未確認',
+      cloudCount: 0,
+      guideText: 'すべて正常に接続されています。'
+    };
+
+    function updateDiagUi() {
+      const authEl = document.getElementById('diag-auth-status');
+      const dbEl = document.getElementById('diag-db-status');
+      const countEl = document.getElementById('diag-cloud-count');
+      const guideEl = document.getElementById('diag-guide-text');
+      const domainEl = document.getElementById('diag-current-domain');
+
+      if (domainEl) domainEl.textContent = window.location.hostname || 'ローカル / プレビュー';
+      if (authEl) {
+        authEl.textContent = diagState.authMsg;
+        authEl.className = diagState.authOk ? 'font-extrabold text-teal-700' : 'font-extrabold text-amber-800';
+      }
+      if (dbEl) {
+        dbEl.textContent = diagState.dbMsg;
+        dbEl.className = diagState.dbOk ? 'font-extrabold text-teal-700' : 'font-extrabold text-red-700';
+      }
+      if (countEl) countEl.textContent = `${diagState.cloudCount}人`;
+      if (guideEl) guideEl.textContent = diagState.guideText;
+    }
+
+    window.__refreshDiagModal = updateDiagUi;
+
     function setSyncStatus(text, isOnline) {
       if (!indicator) return;
       indicator.textContent = text;
       indicator.className = isOnline
-        ? 'px-3 py-1 rounded-full text-[11px] font-extrabold bg-teal-100 text-teal-950 border border-teal-500'
-        : 'px-3 py-1 rounded-full text-[11px] font-bold bg-amber-100 text-amber-950 border border-amber-400';
+        ? 'm3-state-layer px-3 py-1 rounded-full text-[11px] font-extrabold bg-teal-100 text-teal-950 border border-teal-500 cursor-pointer'
+        : 'm3-state-layer px-3 py-1 rounded-full text-[11px] font-bold bg-amber-100 text-amber-950 border border-amber-400 cursor-pointer';
+      updateDiagUi();
     }
 
     function sanitizeForFirestore(obj) {
@@ -3176,37 +3342,57 @@
 
     async function initCloudSync() {
       try {
-        // どの環境（GitHub Pages / ローカル / プレビュー）から開いても必ず同じ animanga-shere-73798 データベースを共有する
-        const firebaseConfig = userFirebaseConfig;
-        const sharedAppId = 'animanga-shere-73798';
+        const primaryAppId = 'animanga-shere-73798';
+        // 過去バージョンや別環境で保存された可能性のあるパスをすべて統合監視対象にする
+        const candidateAppIds = Array.from(new Set([
+          primaryAppId,
+          'anicard-shared-board',
+          'default-app-id',
+          'anicard-default-app',
+          ...(typeof __app_id !== 'undefined' && __app_id ? [String(__app_id)] : [])
+        ]));
 
-        const app = initializeApp(firebaseConfig, 'anicard-shared-prod');
+        const app = initializeApp(userFirebaseConfig, 'anicard-shared-prod');
         const auth = getAuth(app);
-        const db = getFirestore(app);
+        // 厳しいネットワークやブラウザ拡張・iframe環境でも途切れないようLongPolling自動検出を有効化
+        const db = initializeFirestore(app, {
+          experimentalAutoDetectLongPolling: true
+        });
 
-        // 匿名認証を試行（万一Firebaseコンソール側で匿名認証がOFFでFirestoreがテストモードの場合でも同期処理を継続する）
         try {
           await signInAnonymously(auth);
+          diagState.authOk = true;
+          diagState.authMsg = '匿名認証OK';
         } catch (authErr) {
-          console.warn('Anonymous auth skipped or disabled, continuing with direct Firestore access:', authErr);
+          console.warn('Anonymous auth warning:', authErr);
+          const code = authErr?.code || '';
+          diagState.authOk = false;
+          if (code === 'auth/unauthorized-domain') {
+            diagState.authMsg = `ドメイン未登録 (${window.location.hostname})`;
+            diagState.guideText = `GitHub Pagesのドメイン (${window.location.hostname}) がFirebase Authenticationの「承認済みドメイン」に未登録です。Firebaseコンソールの「Authentication ＞ 設定 ＞ 承認済みドメイン」に ${window.location.hostname} を追加するか、Firestoreのルールを「allow read, write: if true;」に変更してください。`;
+          } else {
+            diagState.authMsg = `スキップ (${code || '未有効'})`;
+          }
         }
 
-        const profilesCol = collection(db, 'artifacts', sharedAppId, 'public', 'data', 'anicard_profiles');
+        const primaryCol = collection(db, 'artifacts', primaryAppId, 'public', 'data', 'anicard_profiles');
+        const docsByPathAndId = new Map();
 
-        const applyRemoteDocsToState = (docsArray, removedIds = []) => {
-          const remoteAccounts = [];
-          const remoteProfiles = [];
+        const processAllCollectedDocs = (removedIds = []) => {
+          const localState = window.__getLocalSyncState ? window.__getLocalSyncState() : { deletedProfileIds: [] };
+          const deletedIds = localState.deletedProfileIds || [];
+          const remoteAccountsMap = new Map();
+          const remoteProfilesMap = new Map();
+          const profilesToMigrateToPrimary = [];
 
-          docsArray.forEach((docSnap) => {
-            const data = docSnap.data();
-            const docId = docSnap.id;
+          docsByPathAndId.forEach((entry) => {
+            const { data, docId, appIdSource } = entry;
             if (!data) return;
 
-            const prof = data.profile || (data.name && Array.isArray(data.works) ? data : null);
+            const prof = data.profile || (data.name ? data : null);
             if (!prof) return;
             const pid = prof.id || docId;
-
-            if (deletedProfileIds.includes(pid)) return;
+            if (!pid || deletedIds.includes(pid)) return;
 
             const acc = data.account || {
               id: pid,
@@ -3216,155 +3402,191 @@
             };
 
             prof.id = pid;
-            remoteAccounts.push(acc);
-            remoteProfiles.push(prof);
+            if (!Array.isArray(prof.works)) prof.works = [];
+
+            const existingUpdatedAt = remoteProfilesMap.get(pid)?.__updatedAt || 0;
+            const thisUpdatedAt = data.updatedAt || 1;
+            if (!remoteProfilesMap.has(pid) || thisUpdatedAt >= existingUpdatedAt) {
+              prof.__updatedAt = thisUpdatedAt;
+              remoteAccountsMap.set(pid, acc);
+              remoteProfilesMap.set(pid, prof);
+            }
+
+            if (appIdSource !== primaryAppId) {
+              profilesToMigrateToPrimary.push({ account: acc, profile: prof });
+            }
           });
 
-          // クラウド側で削除されたドキュメントがあればローカルからも除外
-          if (removedIds.length > 0) {
-            accounts = accounts.filter(a => !removedIds.includes(a.id));
-            profiles = profiles.filter(p => !removedIds.includes(p.id));
+          diagState.cloudCount = remoteProfilesMap.size;
+          diagState.dbOk = true;
+          diagState.dbMsg = '同期OK (リアルタイム接続中)';
+          if (diagState.authOk) {
+            diagState.guideText = `現在クラウド上に ${remoteProfilesMap.size} 人のプロフィールが保存・同期されています。`;
           }
 
-          // クラウド側の最新データを優先しつつマージ
-          const mergedAccountsMap = new Map();
-          accounts.forEach(a => {
-            if (a && !deletedProfileIds.includes(a.id)) mergedAccountsMap.set(a.id, a);
-          });
-          remoteAccounts.forEach(a => {
-            if (a && !deletedProfileIds.includes(a.id)) mergedAccountsMap.set(a.id, a);
-          });
-          accounts = Array.from(mergedAccountsMap.values());
+          const totalMembers = window.__receiveCloudProfiles
+            ? window.__receiveCloudProfiles(
+                Array.from(remoteAccountsMap.values()),
+                Array.from(remoteProfilesMap.values()),
+                removedIds
+              )
+            : remoteProfilesMap.size;
 
-          const mergedProfilesMap = new Map();
-          profiles.forEach(p => {
-            if (p && !deletedProfileIds.includes(p.id)) mergedProfilesMap.set(p.id, p);
+          setSyncStatus(`クラウド同期中 (${totalMembers}人)`, true);
+
+          // 旧パスにのみ存在していたプロフィールをメインパスへ自動集約
+          profilesToMigrateToPrimary.forEach(({ account, profile }) => {
+            const hasInPrimary = docsByPathAndId.has(`${primaryAppId}::${profile.id}`);
+            if (!hasInPrimary && window.__pushProfileToCloud) {
+              window.__pushProfileToCloud(account, profile, true);
+            }
           });
-          remoteProfiles.forEach(p => {
-            if (p && !deletedProfileIds.includes(p.id)) mergedProfilesMap.set(p.id, p);
-          });
-          profiles = Array.from(mergedProfilesMap.values());
-
-          try {
-            localStorage.setItem(STORAGE_KEY_STATE, JSON.stringify({ accounts, profiles }));
-          } catch (e) {}
-
-          const params = new URLSearchParams(window.location.search);
-          const urlUser = params.get('user');
-          if (urlUser && profiles.some(p => p.id === urlUser)) {
-            activeProfileId = urlUser;
-          } else if (!activeProfileId || !profiles.some(p => p.id === activeProfileId)) {
-            activeProfileId = (loggedInAccountId && profiles.some(p => p.id === loggedInAccountId))
-              ? loggedInAccountId
-              : (profiles[0]?.id || null);
-          }
-
-          syncActiveProfileWorks();
-          renderAll();
-          if (currentTab === 'seasonal') renderSeasonalMainGrid();
-          if (currentTab === 'edit') renderExploreStreamGrid();
-          if (currentTab === 'library') renderEditorGrid();
-          if (works.length > 0) batchFetchCoversFromAniList(works);
-          setSyncStatus(`クラウド同期中 (${profiles.length}人)`, true);
         };
 
-        // 自分のプロフィール変更をクラウドへ保存する関数
+        // プロフィール変更をクラウドへ保存する関数
         let cloudSaveTimer = null;
         window.__pushProfileToCloud = (accountObj, profileObj, immediate = false) => {
           if (!accountObj || !profileObj) return;
           const execPush = async () => {
             try {
-              const ref = doc(db, 'artifacts', sharedAppId, 'public', 'data', 'anicard_profiles', profileObj.id);
+              const cleanProfile = { ...profileObj };
+              delete cleanProfile.__updatedAt;
+              const ref = doc(db, 'artifacts', primaryAppId, 'public', 'data', 'anicard_profiles', profileObj.id);
               await setDoc(ref, sanitizeForFirestore({
                 account: accountObj,
-                profile: profileObj,
+                profile: cleanProfile,
                 updatedAt: Date.now()
               }));
-              setSyncStatus(`クラウド同期中 (${profiles.length}人)`, true);
+              diagState.dbOk = true;
+              diagState.dbMsg = '書き込み＆同期OK';
+              updateDiagUi();
             } catch (e) {
               console.error('Cloud save failed:', e);
-              setSyncStatus('同期エラー(ルール確認)', false);
+              diagState.dbOk = false;
+              diagState.dbMsg = `書き込みエラー (${e?.code || '権限不足'})`;
+              diagState.guideText = `Firestoreへの書き込みが拒否されました (${e?.code || ''})。Firebaseコンソール ＞ Firestore Database ＞ ルール にて「allow read, write: if true;」にして公開ボタンを押してください。`;
+              setSyncStatus('同期エラー(クリックで確認)', false);
             }
           };
 
           clearTimeout(cloudSaveTimer);
           if (immediate) {
-            execPush();
+            return execPush();
           } else {
-            cloudSaveTimer = setTimeout(execPush, 450);
+            cloudSaveTimer = setTimeout(execPush, 350);
           }
         };
 
-        // プロフィール削除時にクラウド側ドキュメントも削除する関数
+        // プロフィール削除時に全候補パスからドキュメントを削除する関数
         window.__deleteProfileFromCloud = async (profileId) => {
           if (!profileId) return;
-          try {
-            const ref = doc(db, 'artifacts', sharedAppId, 'public', 'data', 'anicard_profiles', profileId);
-            await deleteDoc(ref);
-          } catch (e) {
-            console.error('Cloud delete failed:', e);
+          for (const candidateId of candidateAppIds) {
+            try {
+              docsByPathAndId.delete(`${candidateId}::${profileId}`);
+              const ref = doc(db, 'artifacts', candidateId, 'public', 'data', 'anicard_profiles', profileId);
+              await deleteDoc(ref);
+            } catch (e) {}
           }
         };
 
-        // 手動でクラウドから全メンバーを再取得＆自分のプロフィールを送信する関数
-        window.__manualCloudSync = async () => {
+        // ローカルにあってクラウドにまだ無いプロフィールをすべてクラウドへ送信する関数
+        const uploadMissingLocalProfiles = async () => {
+          const localState = window.__getLocalSyncState ? window.__getLocalSyncState() : null;
+          if (!localState) return;
+          const { accounts: localAccs, profiles: localProfs, deletedProfileIds: delIds } = localState;
+          for (const prof of localProfs) {
+            if (!prof || !prof.id || delIds.includes(prof.id)) continue;
+            const acc = localAccs.find(a => a.id === prof.id || a.id === prof.ownerAccountId) || {
+              id: prof.id,
+              handle: String(prof.handle || prof.id).replace(/^@/, ''),
+              passwordHash: '',
+              name: prof.name || prof.id
+            };
+            await window.__pushProfileToCloud(acc, prof, true);
+          }
+        };
+
+        // 手動または定期ポーリングで全候補パスから最新ドキュメントを取得する関数
+        const fetchAllCandidateCollections = async (showNotice = false) => {
           try {
-            setSyncStatus('同期通信中...', true);
-            if (loggedInAccountId) {
-              const myAcc = accounts.find(a => a.id === loggedInAccountId);
-              const myProf = profiles.find(p => p.id === loggedInAccountId);
-              if (myAcc && myProf) {
-                await window.__pushProfileToCloud(myAcc, myProf, true);
+            if (showNotice) setSyncStatus('同期通信中...', true);
+            await uploadMissingLocalProfiles();
+
+            for (const candidateId of candidateAppIds) {
+              try {
+                const colRef = collection(db, 'artifacts', candidateId, 'public', 'data', 'anicard_profiles');
+                const snap = await getDocs(colRef);
+                snap.forEach(d => {
+                  docsByPathAndId.set(`${candidateId}::${d.id}`, {
+                    data: d.data(),
+                    docId: d.id,
+                    appIdSource: candidateId
+                  });
+                });
+              } catch (innerErr) {
+                if (candidateId === primaryAppId) throw innerErr;
               }
             }
-            const snap = await getDocs(profilesCol);
-            const docs = [];
-            snap.forEach(d => docs.push(d));
-            applyRemoteDocsToState(docs, []);
-            showToast(`クラウドから全メンバー情報（${profiles.length}人）を同期しました`);
+
+            processAllCollectedDocs([]);
+            if (showNotice && typeof window.showToast === 'function') {
+              window.showToast(`クラウド同期完了（検出メンバー: ${diagState.cloudCount}人）`);
+            }
           } catch (e) {
-            console.error('Manual cloud sync error:', e);
-            setSyncStatus('同期エラー(ルール確認)', false);
-            showToast('クラウド同期に失敗しました。Firebaseのルール設定を確認してください');
+            console.error('Cloud fetch error:', e);
+            diagState.dbOk = false;
+            diagState.dbMsg = `読込エラー (${e?.code || 'ルール確認'})`;
+            diagState.guideText = `Firestoreからの読み込みが拒否されました (${e?.code || ''})。Firestore Database ＞ ルール を「allow read, write: if true;」に変更して公開してください。`;
+            setSyncStatus('同期エラー(クリックで確認)', false);
           }
         };
 
-        // サーバー上の全員のプロフィールとアカウント情報をリアルタイム購読
-        let initialUploadDone = false;
-        onSnapshot(
-          profilesCol,
-          (snapshot) => {
-            const removedIds = [];
-            snapshot.docChanges().forEach(change => {
-              if (change.type === 'removed') {
-                removedIds.push(change.doc.id);
-              }
-            });
+        window.__manualCloudSync = () => fetchAllCandidateCollections(true);
 
-            const docs = [];
-            snapshot.forEach(d => docs.push(d));
-            applyRemoteDocsToState(docs, removedIds);
-
-            // 初回購読完了時、ローカルにある自分のプロフィールをクラウドへ確実にアップロード
-            if (!initialUploadDone) {
-              initialUploadDone = true;
-              if (loggedInAccountId) {
-                const myAcc = accounts.find(a => a.id === loggedInAccountId);
-                const myProf = profiles.find(p => p.id === loggedInAccountId);
-                if (myAcc && myProf && !deletedProfileIds.includes(myProf.id)) {
-                  window.__pushProfileToCloud(myAcc, myProf, true);
+        // 全候補パスに対してリアルタイム監視 (onSnapshot) を設定
+        candidateAppIds.forEach((candidateId) => {
+          const colRef = collection(db, 'artifacts', candidateId, 'public', 'data', 'anicard_profiles');
+          onSnapshot(
+            colRef,
+            (snapshot) => {
+              const removedIds = [];
+              snapshot.docChanges().forEach(change => {
+                const key = `${candidateId}::${change.doc.id}`;
+                if (change.type === 'removed') {
+                  docsByPathAndId.delete(key);
+                  removedIds.push(change.doc.id);
+                } else {
+                  docsByPathAndId.set(key, {
+                    data: change.doc.data(),
+                    docId: change.doc.id,
+                    appIdSource: candidateId
+                  });
                 }
+              });
+              processAllCollectedDocs(removedIds);
+            },
+            (err) => {
+              if (candidateId === primaryAppId) {
+                console.error('Primary Firestore listener error:', err);
+                diagState.dbOk = false;
+                diagState.dbMsg = `エラー (${err?.code || '接続失敗'})`;
+                setSyncStatus('同期エラー(クリックで確認)', false);
               }
             }
-          },
-          (err) => {
-            console.error('Firestore sync error:', err);
-            setSyncStatus('ローカル保存モード', false);
-          }
-        );
+          );
+        });
+
+        // 初回接続時にローカルの全プロフィールをアップロード＆全パスを取得
+        await fetchAllCandidateCollections(false);
+
+        // タブをアクティブにした際＆15秒おきにバックグラウンド同期を実行
+        window.addEventListener('focus', () => fetchAllCandidateCollections(false));
+        setInterval(() => fetchAllCandidateCollections(false), 15000);
       } catch (e) {
-        console.error('Cloud init skipped:', e);
-        setSyncStatus('ローカル保存モード', false);
+        console.error('Cloud init failed:', e);
+        diagState.dbOk = false;
+        diagState.dbMsg = `初期化失敗 (${e?.message || 'エラー'})`;
+        setSyncStatus('同期エラー(クリックで確認)', false);
       }
     }
 
