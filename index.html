@@ -180,6 +180,19 @@
       color: #261900;
       border: 1px solid #997300;
     }
+    /* マイベスト BEST 1〜5 固定表示用ソリッドスタイル */
+    .best-rank-card {
+      background-color: #FFFBEB;
+      border: 2px solid #D97706 !important;
+    }
+    .best-rank-poster {
+      border: 3px solid #B45309 !important;
+    }
+    .best-rank-badge {
+      background-color: #B45309;
+      color: #FFFFFF;
+      border: 1px solid #78350F;
+    }
   </style>
 </head>
 <body class="w-screen overflow-hidden flex bg-md-surface text-md-onSurface">
@@ -470,12 +483,13 @@
 
         <!-- 棚1: いつでも語れる・殿堂入り -->
         <section class="space-y-3">
-          <div class="flex items-end justify-between">
+          <div class="flex items-end justify-between flex-wrap gap-2">
             <div>
-              <span class="text-[11px] font-extrabold tracking-wider uppercase text-md-primary">FAVORITES & MASTERPIECES</span>
-              <div class="flex items-center gap-2.5">
+              <span class="text-[11px] font-extrabold tracking-wider uppercase text-md-primary">FAVORITES & MASTERPIECES (BEST 5 PINNED)</span>
+              <div class="flex items-center gap-2.5 flex-wrap">
                 <h2 class="text-xl sm:text-2xl font-extrabold text-md-onSurface">いつでも語れる・殿堂入り</h2>
                 <span id="count-love" class="text-xs font-extrabold px-2.5 py-0.5 rounded-full bg-md-primaryContainer text-md-onPrimaryContainer">0</span>
+                <span class="text-[11px] font-bold text-amber-900 bg-amber-100 border border-amber-400 px-2.5 py-0.5 rounded-full">BEST 1〜5 を先頭に固定可能</span>
               </div>
             </div>
             <div class="flex items-center gap-1.5">
@@ -605,20 +619,36 @@
             </div>
           </div>
 
-          <div class="flex flex-col sm:flex-row gap-2">
-            <input
-              type="text"
-              id="explore-search-input"
-              placeholder="作品タイトルで検索（Enterで検索実行・検索中はその作品のみ表示）..."
-              onkeydown="if(event.key==='Enter') executeExploreSearch()"
-              class="flex-1 h-11 px-4 rounded-xl bg-md-surfaceContainerLow border border-md-outlineVariant text-sm text-md-onSurface focus:outline-none focus:border-md-primary"
-            >
-            <button onclick="executeExploreSearch()" class="m3-state-layer h-11 px-6 rounded-xl bg-md-primary text-md-onPrimary text-xs font-bold shrink-0">
-              検索する
-            </button>
-            <button onclick="clearExploreSearch()" id="explore-clear-btn" class="hidden m3-state-layer h-11 px-4 rounded-xl bg-md-surfaceContainerHigh text-md-onSurface text-xs font-bold shrink-0">
-              クリア
-            </button>
+          <!-- 検索モード切替（作品名検索 / 作者・スタッフ検索）＆検索入力バー -->
+          <div class="space-y-2">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="text-xs font-extrabold text-md-onSurfaceVariant">検索対象:</span>
+              <div class="inline-flex rounded-full p-1 bg-md-surfaceContainerHigh border border-md-outlineVariant">
+                <button type="button" onclick="setExploreSearchMode('TITLE')" id="explore-search-mode-TITLE" class="px-3.5 py-1 rounded-full text-xs font-extrabold bg-md-primary text-md-onPrimary">
+                  作品名で検索
+                </button>
+                <button type="button" onclick="setExploreSearchMode('AUTHOR')" id="explore-search-mode-AUTHOR" class="px-3.5 py-1 rounded-full text-xs font-extrabold text-md-onSurfaceVariant">
+                  作者・監督・スタッフ名で検索
+                </button>
+              </div>
+              <span id="explore-author-result-badge" class="hidden text-xs font-extrabold px-3 py-1 rounded-full bg-amber-100 text-amber-950 border border-amber-400"></span>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-2">
+              <input
+                type="text"
+                id="explore-search-input"
+                placeholder="作品タイトルで検索（Enterで検索実行・検索中はその作品のみ表示）..."
+                onkeydown="if(event.key==='Enter') executeExploreSearch()"
+                class="flex-1 h-11 px-4 rounded-xl bg-md-surfaceContainerLow border border-md-outlineVariant text-sm text-md-onSurface focus:outline-none focus:border-md-primary"
+              >
+              <button onclick="executeExploreSearch()" class="m3-state-layer h-11 px-6 rounded-xl bg-md-primary text-md-onPrimary text-xs font-bold shrink-0">
+                検索する
+              </button>
+              <button onclick="clearExploreSearch()" id="explore-clear-btn" class="hidden m3-state-layer h-11 px-4 rounded-xl bg-md-surfaceContainerHigh text-md-onSurface text-xs font-bold shrink-0">
+                クリア
+              </button>
+            </div>
           </div>
 
           <div class="flex items-center justify-between gap-3 flex-wrap pt-1">
@@ -1002,6 +1032,21 @@
         </div>
       </div>
 
+      <!-- いつでも語れる（殿堂入り）の BEST 1〜5 固定設定 -->
+      <div id="comment-modal-best-section" class="space-y-1.5">
+        <div class="flex items-center justify-between">
+          <label class="text-xs font-bold text-md-onSurfaceVariant block">殿堂入り BEST 5 固定（棚の先頭にピン留め）</label>
+          <button type="button" onclick="selectModalBestRank(0)" class="text-[11px] font-bold text-md-onSurfaceVariant hover:underline">固定を解除</button>
+        </div>
+        <div class="grid grid-cols-5 gap-1.5">
+          <button type="button" onclick="selectModalBestRank(1)" id="modal-best-1" class="h-9 rounded-xl text-xs font-extrabold border">BEST 1</button>
+          <button type="button" onclick="selectModalBestRank(2)" id="modal-best-2" class="h-9 rounded-xl text-xs font-extrabold border">BEST 2</button>
+          <button type="button" onclick="selectModalBestRank(3)" id="modal-best-3" class="h-9 rounded-xl text-xs font-extrabold border">BEST 3</button>
+          <button type="button" onclick="selectModalBestRank(4)" id="modal-best-4" class="h-9 rounded-xl text-xs font-extrabold border">BEST 4</button>
+          <button type="button" onclick="selectModalBestRank(5)" id="modal-best-5" class="h-9 rounded-xl text-xs font-extrabold border">BEST 5</button>
+        </div>
+      </div>
+
       <div class="space-y-1.5">
         <label class="text-xs font-bold text-md-onSurfaceVariant block">感想・一言コメント</label>
         <input
@@ -1013,15 +1058,20 @@
           class="w-full h-11 bg-md-surfaceContainerLowest border border-md-outline rounded-xl px-3.5 text-sm text-md-onSurface focus:outline-none focus:border-md-primary"
         >
       </div>
-      <div class="flex justify-end gap-2 pt-2">
-        <button onclick="closeCommentModal()" class="m3-state-layer h-10 px-4 rounded-full text-xs font-semibold text-md-onSurfaceVariant">キャンセル</button>
-        <button onclick="saveWorkComment()" class="m3-state-layer h-10 px-6 rounded-full bg-md-primary text-md-onPrimary text-xs font-bold">保存する</button>
+      <div class="flex items-center justify-between gap-2 pt-2 border-t border-md-outlineVariant/60">
+        <button type="button" onclick="deleteWorkFromCommentModal()" class="m3-state-layer h-10 px-3.5 rounded-full bg-red-50 border border-red-300 text-xs font-extrabold text-red-800">
+          登録を削除
+        </button>
+        <div class="flex items-center gap-2">
+          <button onclick="closeCommentModal()" class="m3-state-layer h-10 px-4 rounded-full text-xs font-semibold text-md-onSurfaceVariant">キャンセル</button>
+          <button onclick="saveWorkComment()" class="m3-state-layer h-10 px-6 rounded-full bg-md-primary text-md-onPrimary text-xs font-bold">保存する</button>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- トースト通知（スマホではボトムナビの上に表示） -->
-  <div id="toast-box" class="fixed bottom-20 md:bottom-5 right-4 left-4 md:left-auto z-50 hidden px-5 py-3 rounded-xl bg-md-inverseSurface text-md-inverseOnSurface text-xs font-bold shadow-lg text-center md:text-left"></div>
+  <!-- トースト通知（スマホではボトムナビの上に表示・元に戻すアクション対応） -->
+  <div id="toast-box" class="fixed bottom-20 md:bottom-5 right-4 left-4 md:left-auto z-50 hidden px-4 py-3 rounded-xl bg-md-inverseSurface text-md-inverseOnSurface text-xs font-bold shadow-lg flex items-center justify-center md:justify-start gap-3"></div>
 
   <script>
     // ====================================================
@@ -1078,6 +1128,7 @@
 
     let exploreMediaType = 'ALL';
     let exploreEraFilter = 'ALL';
+    let exploreSearchMode = 'TITLE';
     let exploreSearchQuery = '';
     let exploreStreamItems = [];
     let exploreApiPage = 1;
@@ -1087,6 +1138,8 @@
     let editingCommentWorkId = null;
     let modalTempProgressState = 'completed';
     let modalTempRating = 0;
+    let modalTempBestRank = 0;
+    let lastRemovedWorkBackup = null;
     let pendingDeleteProfileId = null;
     let pendingRegAvatarDataUrl = '';
     let pendingEditAvatarDataUrl = '';
@@ -1350,6 +1403,11 @@
           }
           if ((Number(item.rating) || 0) > (Number(existing.rating) || 0)) {
             existing.rating = item.rating;
+          }
+          const b1 = Number(existing.bestRank) || 0;
+          const b2 = Number(item.bestRank) || 0;
+          if (b2 >= 1 && b2 <= 5 && (b1 === 0 || b2 < b1)) {
+            existing.bestRank = b2;
           }
           const v1 = ensureConsumedVia(existing);
           const v2 = ensureConsumedVia(item);
@@ -1929,6 +1987,110 @@
       return w.rating;
     }
 
+    function ensureBestRank(w) {
+      if (!w || w.status !== 'love') {
+        if (w) w.bestRank = 0;
+        return 0;
+      }
+      const num = Number(w.bestRank);
+      if (!Number.isFinite(num) || num < 1 || num > 5) {
+        w.bestRank = 0;
+        return 0;
+      }
+      w.bestRank = Math.round(num);
+      return w.bestRank;
+    }
+
+    function assignBestRankToWork(targetList, workId, rankValue) {
+      const rank = Number(rankValue) || 0;
+      const target = targetList.find(item => item.id === workId);
+      if (!target) return 0;
+
+      if (rank < 1 || rank > 5) {
+        target.bestRank = 0;
+        return 0;
+      }
+
+      // 殿堂入り以外の作品にBEST順位を付けた場合は自動的に殿堂入り（いつでも語れる）へ昇格
+      target.status = 'love';
+      // 他の作品に同じ順位が付いていればクリアして重複を防ぐ
+      targetList.forEach(item => {
+        if (item.id !== workId && Number(item.bestRank) === rank) {
+          item.bestRank = 0;
+        }
+      });
+      target.bestRank = rank;
+      return rank;
+    }
+
+    function setWorkBestRank(workId, rankValue, event) {
+      if (event) event.stopPropagation();
+      const targetList = (currentTab === 'edit' || currentTab === 'library') ? getEditableWorksList() : works;
+      if (currentTab === 'home' && !isCurrentProfileEditable()) {
+        showToast('自分のプロフィールでのみBEST 5固定を変更できます');
+        return;
+      }
+      const w = targetList.find(item => item.id === workId);
+      if (!w) return;
+      const current = ensureBestRank(w);
+      const next = current === Number(rankValue) ? 0 : Number(rankValue);
+      assignBestRankToWork(targetList, workId, next);
+      if (activeProfileId === loggedInAccountId) works = targetList;
+      saveStateToStorage();
+      if (currentTab === 'library') renderEditorGrid();
+      renderAll();
+      showToast(next > 0 ? `『${w.title}』を殿堂入り BEST ${next} に固定しました` : `『${w.title}』のBEST固定を解除しました`);
+    }
+
+    // マイプロフィールのサムネイルから誤登録作品をワンタップ削除する関数（元に戻す対応）
+    function removeWorkFromMyProfile(workId, event) {
+      if (event) event.stopPropagation();
+      const targetList = (currentTab === 'edit' || currentTab === 'library') ? getEditableWorksList() : works;
+      if (currentTab === 'home' && !isCurrentProfileEditable()) {
+        showToast('自分のプロフィールの作品のみ削除できます');
+        return;
+      }
+      const w = targetList.find(item => item.id === workId);
+      if (!w) return;
+
+      lastRemovedWorkBackup = {
+        workId: w.id,
+        previousStatus: w.status,
+        previousBestRank: w.bestRank || 0,
+        title: w.title
+      };
+
+      w.status = 'none';
+      w.bestRank = 0;
+      if (activeProfileId === loggedInAccountId) works = targetList;
+      saveStateToStorage();
+      if (currentTab === 'library') renderEditorGrid();
+      if (currentTab === 'edit') updateSingleExploreCardDom(workId);
+      renderAll();
+      showToast(`『${w.title}』をマイプロフィールから削除しました`, {
+        actionLabel: '元に戻す',
+        onAction: () => undoLastRemovedWork()
+      });
+    }
+
+    function undoLastRemovedWork() {
+      if (!lastRemovedWorkBackup) return;
+      const targetList = getEditableWorksList();
+      const w = targetList.find(item => item.id === lastRemovedWorkBackup.workId);
+      if (w) {
+        w.status = lastRemovedWorkBackup.previousStatus || 'watched';
+        if (w.status === 'love' && lastRemovedWorkBackup.previousBestRank) {
+          assignBestRankToWork(targetList, w.id, lastRemovedWorkBackup.previousBestRank);
+        }
+        if (activeProfileId === loggedInAccountId) works = targetList;
+        saveStateToStorage();
+        if (currentTab === 'library') renderEditorGrid();
+        renderAll();
+        showToast(`『${w.title}』の登録を元に戻しました`);
+      }
+      lastRemovedWorkBackup = null;
+    }
+
     function formatRatingStarsText(rating) {
       const r = Math.min(5, Math.max(0, Number(rating) || 0));
       if (r === 0) return '☆☆☆☆☆';
@@ -2124,30 +2286,38 @@
       renderAll();
     }
 
-    function sortProfileWorksList(list) {
+    function sortProfileWorksList(list, pinBestFiveFirst = false) {
       if (!Array.isArray(list)) return [];
       const copy = [...list];
-      if (homeSortMode === 'RATING_DESC') {
-        return copy.sort((a, b) => {
+
+      const baseComparator = (a, b) => {
+        if (homeSortMode === 'RATING_DESC') {
           const rDiff = ensureRating(b) - ensureRating(a);
           if (rDiff !== 0) return rDiff;
           return String(a.title || '').localeCompare(String(b.title || ''), 'ja');
-        });
-      }
-      if (homeSortMode === 'TITLE_ASC') {
-        return copy.sort((a, b) =>
-          String(a.title || '').localeCompare(String(b.title || ''), 'ja')
-        );
-      }
-      if (homeSortMode === 'MEDIA_ORDER') {
-        const order = { anime: 1, manga: 2, both: 3 };
-        return copy.sort((a, b) => {
+        }
+        if (homeSortMode === 'TITLE_ASC') {
+          return String(a.title || '').localeCompare(String(b.title || ''), 'ja');
+        }
+        if (homeSortMode === 'MEDIA_ORDER') {
+          const order = { anime: 1, manga: 2, both: 3 };
           const mDiff = (order[ensureConsumedVia(a)] || 9) - (order[ensureConsumedVia(b)] || 9);
           if (mDiff !== 0) return mDiff;
           return ensureRating(b) - ensureRating(a);
-        });
-      }
-      return copy;
+        }
+        return 0;
+      };
+
+      return copy.sort((a, b) => {
+        if (pinBestFiveFirst) {
+          const rankA = ensureBestRank(a);
+          const rankB = ensureBestRank(b);
+          if (rankA > 0 && rankB > 0) return rankA - rankB;
+          if (rankA > 0) return -1;
+          if (rankB > 0) return 1;
+        }
+        return baseComparator(a, b);
+      });
     }
 
     function filterWorkByHomeChip(w) {
@@ -2693,6 +2863,34 @@
       }
     }
 
+    function setExploreSearchMode(mode) {
+      exploreSearchMode = mode === 'AUTHOR' ? 'AUTHOR' : 'TITLE';
+      const titleBtn = document.getElementById('explore-search-mode-TITLE');
+      const authorBtn = document.getElementById('explore-search-mode-AUTHOR');
+      const inputEl = document.getElementById('explore-search-input');
+
+      if (titleBtn) {
+        titleBtn.className = exploreSearchMode === 'TITLE'
+          ? 'px-3.5 py-1 rounded-full text-xs font-extrabold bg-md-primary text-md-onPrimary'
+          : 'px-3.5 py-1 rounded-full text-xs font-extrabold text-md-onSurfaceVariant';
+      }
+      if (authorBtn) {
+        authorBtn.className = exploreSearchMode === 'AUTHOR'
+          ? 'px-3.5 py-1 rounded-full text-xs font-extrabold bg-md-primary text-md-onPrimary'
+          : 'px-3.5 py-1 rounded-full text-xs font-extrabold text-md-onSurfaceVariant';
+      }
+      if (inputEl) {
+        inputEl.placeholder = exploreSearchMode === 'AUTHOR'
+          ? '作者名・漫画家・監督名で検索（例: 冨樫義博 / 荒川弘 / 藤本タツキ / 新海誠）...'
+          : '作品タイトルで検索（Enterで検索実行・検索中はその作品のみ表示）...';
+      }
+
+      const currentVal = (inputEl?.value || '').trim();
+      if (currentVal) {
+        executeExploreSearch();
+      }
+    }
+
     function triggerHeaderQuickSearch() {
       const q = (document.getElementById('header-quick-search')?.value || '').trim();
       if (!q) return;
@@ -2702,11 +2900,227 @@
       executeExploreSearch();
     }
 
+    // 作者・監督名にありがちな旧字体やスペース揺れを吸収し、主要作家のローマ字フォールバックも返す補助関数
+    function buildAuthorSearchCandidates(rawQuery) {
+      const clean = String(rawQuery || '').trim();
+      const noSpace = clean.replace(/[\s　]+/g, '');
+      const candidates = [clean, noSpace];
+
+      const swaps = [
+        ['冨', '富'],
+        ['﨑', '崎'],
+        ['髙', '高'],
+        ['邊', '辺'],
+        ['邉', '辺'],
+        ['澤', '沢'],
+        ['齋', '斎'],
+        ['齊', '斉']
+      ];
+      swaps.forEach(([a, b]) => {
+        if (noSpace.includes(a)) candidates.push(noSpace.replaceAll(a, b));
+        if (noSpace.includes(b)) candidates.push(noSpace.replaceAll(b, a));
+      });
+
+      const knownRomajiMap = {
+        '冨樫義博': 'Yoshihiro Togashi',
+        '富樫義博': 'Yoshihiro Togashi',
+        '鳥山明': 'Akira Toriyama',
+        '尾田栄一郎': 'Eiichiro Oda',
+        '岸本斉史': 'Masashi Kishimoto',
+        '久保帯人': 'Tite Kubo',
+        '荒川弘': 'Hiromu Arakawa',
+        '諫山創': 'Hajime Isayama',
+        '芥見下々': 'Gege Akutami',
+        '藤本タツキ': 'Tatsuki Fujimoto',
+        '吾峠呼世晴': 'Koyoharu Gotouge',
+        '堀越耕平': 'Kohei Horikoshi',
+        '古舘春一': 'Haruichi Furudate',
+        '井上雄彦': 'Takehiko Inoue',
+        '荒木飛呂彦': 'Hirohiko Araki',
+        '高橋留美子': 'Rumiko Takahashi',
+        '浦沢直樹': 'Naoki Urasawa',
+        '三浦建太郎': 'Kentarou Miura',
+        '赤坂アカ': 'Aka Akasaka',
+        '九井諒子': 'Ryouko Kui',
+        '遠藤達哉': 'Tatsuya Endou',
+        '山田鐘人': 'Kanehito Yamada',
+        'アベツカサ': 'Tsukasa Abe',
+        '魚豊': 'Uoto',
+        '新海誠': 'Makoto Shinkai',
+        '宮崎駿': 'Hayao Miyazaki',
+        '庵野秀明': 'Hideaki Anno',
+        '虚淵玄': 'Gen Urobuchi',
+        '大場つぐみ': 'Tsugumi Ohba',
+        '小畑健': 'Takeshi Obata',
+        '石田スイ': 'Sui Ishida',
+        '原泰久': 'Yasuhisa Hara',
+        '幸村誠': 'Makoto Yukimura',
+        '手塚治虫': 'Osamu Tezuka',
+        '藤子・F・不二雄': 'Fujiko F. Fujio'
+      };
+      if (knownRomajiMap[noSpace]) {
+        candidates.push(knownRomajiMap[noSpace]);
+      }
+
+      return Array.from(new Set(candidates.filter(Boolean)));
+    }
+
+    async function executeExploreAuthorSearch(q, eraRange) {
+      const grid = document.getElementById('explore-stream-grid');
+      const authorBadge = document.getElementById('explore-author-result-badge');
+      const eraLabel = eraRange ? `（${eraRange.label}）` : '';
+      if (grid) {
+        grid.innerHTML = `<div class="col-span-full p-10 text-center text-sm font-bold text-md-onSurfaceVariant">作者・スタッフ『${escapeHtmlAttr(q)}』${eraLabel}の関連作品を検索しています...</div>`;
+      }
+
+      const staffQuery = `
+        query ($search: String) {
+          Page(page: 1, perPage: 8) {
+            staff(search: $search, sort: [SEARCH_MATCH, FAVOURITES_DESC]) {
+              id
+              name { native full }
+              staffMedia(sort: POPULARITY_DESC, perPage: 25) {
+                edges {
+                  staffRole
+                  node {
+                    id
+                    type
+                    format
+                    isAdult
+                    startDate { year }
+                    title { native romaji }
+                    coverImage { large }
+                  }
+                }
+              }
+            }
+          }
+        }
+      `;
+
+      const candidates = buildAuthorSearchCandidates(q);
+      let matchedStaffList = [];
+
+      for (const candidateTerm of candidates) {
+        try {
+          const res = await fetch('https://graphql.anilist.co', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query: staffQuery, variables: { search: candidateTerm } })
+          });
+          if (res.ok) {
+            const json = await res.json();
+            const staffNodes = json?.data?.Page?.staff || [];
+            if (staffNodes.length > 0) {
+              matchedStaffList = staffNodes;
+              break;
+            }
+          }
+        } catch (e) {}
+      }
+
+      const seriesGroups = new Map();
+      const matchedAuthorNames = [];
+
+      matchedStaffList.forEach(staff => {
+        const authorName = staff.name?.native || staff.name?.full || q;
+        if (authorName && !matchedAuthorNames.includes(authorName)) {
+          matchedAuthorNames.push(authorName);
+        }
+        const edges = staff.staffMedia?.edges || [];
+        edges.forEach(edge => {
+          const m = edge?.node;
+          if (!m || m.isAdult) return;
+          if (exploreMediaType === 'ANIME' && m.type !== 'ANIME') return;
+          if (exploreMediaType === 'MANGA' && m.type !== 'MANGA') return;
+
+          const startYear = m.startDate?.year || null;
+          if (eraRange && startYear && (startYear < eraRange.minYear || startYear > eraRange.maxYear)) {
+            return;
+          }
+
+          const rawTitle = m.title?.native || m.title?.romaji || '作品';
+          const canonicalTitle = extractCanonicalSeriesTitle(rawTitle);
+          const sKey = normalizeTitleKey(canonicalTitle);
+          if (!sKey) return;
+
+          const cover = m.coverImage?.large || '';
+          const animeCover = m.type === 'ANIME' ? cover : (coverCache[sKey]?.anime || '');
+          const mangaCover = m.type === 'MANGA' ? cover : (coverCache[sKey]?.manga || '');
+
+          if (animeCover || mangaCover) {
+            const entry = {
+              anime: animeCover || coverCache[sKey]?.anime || '',
+              manga: mangaCover || coverCache[sKey]?.manga || ''
+            };
+            coverCache[sKey] = entry;
+            coverCache[m.id] = entry;
+          }
+
+          const defaultVia = exploreMediaType === 'MANGA'
+            ? 'manga'
+            : (exploreMediaType === 'ANIME' ? 'anime' : (m.type === 'MANGA' ? 'manga' : 'anime'));
+          const yearPrefix = startYear ? `${startYear}年 • ` : '';
+          const roleText = edge.staffRole ? ` (${edge.staffRole})` : '';
+
+          if (!seriesGroups.has(sKey)) {
+            seriesGroups.set(sKey, {
+              id: m.id,
+              anilistId: m.id,
+              title: canonicalTitle,
+              searchTitle: canonicalTitle,
+              startYear,
+              authorName,
+              media: m.type === 'MANGA' ? '漫画' : 'アニメ',
+              consumedVia: defaultVia,
+              progressState: 'completed',
+              progressNote: '',
+              status: 'none',
+              comment: '',
+              sub: `${yearPrefix}${authorName}${roleText}`,
+              imageUrl: animeCover || mangaCover || cover,
+              animeImageUrl: animeCover,
+              mangaImageUrl: mangaCover
+            });
+          } else {
+            const existingGroup = seriesGroups.get(sKey);
+            if (m.type === 'MANGA' && existingGroup.media === 'アニメ') {
+              existingGroup.media = 'アニメ・漫画';
+            } else if (m.type === 'ANIME' && existingGroup.media === '漫画') {
+              existingGroup.media = 'アニメ・漫画';
+              if (exploreMediaType !== 'MANGA') existingGroup.consumedVia = 'anime';
+            }
+            if (!existingGroup.animeImageUrl && animeCover) existingGroup.animeImageUrl = animeCover;
+            if (!existingGroup.mangaImageUrl && mangaCover) existingGroup.mangaImageUrl = mangaCover;
+            if (!existingGroup.imageUrl && (animeCover || mangaCover)) {
+              existingGroup.imageUrl = animeCover || mangaCover;
+            }
+          }
+        });
+      });
+
+      exploreStreamItems = Array.from(seriesGroups.values());
+      saveCoverCache();
+
+      if (authorBadge) {
+        if (matchedAuthorNames.length > 0) {
+          authorBadge.textContent = `一致した作者・スタッフ: ${matchedAuthorNames.slice(0, 3).join(' / ')} (${exploreStreamItems.length}作品)`;
+          authorBadge.classList.remove('hidden');
+        } else {
+          authorBadge.textContent = `『${q}』に一致する作者データが見つかりませんでした`;
+          authorBadge.classList.remove('hidden');
+        }
+      }
+
+      renderExploreStreamGrid();
+    }
+
     async function executeExploreSearch() {
       const q = (document.getElementById('explore-search-input')?.value || '').trim();
       exploreSearchQuery = q;
       const clearBtn = document.getElementById('explore-clear-btn');
       const loadMoreContainer = document.getElementById('explore-load-more-container');
+      const authorBadge = document.getElementById('explore-author-result-badge');
 
       if (!q) {
         clearExploreSearch();
@@ -2716,8 +3130,14 @@
       if (clearBtn) clearBtn.classList.remove('hidden');
       if (loadMoreContainer) loadMoreContainer.classList.add('hidden');
 
-      const grid = document.getElementById('explore-stream-grid');
       const eraRange = getEraDateRange(exploreEraFilter);
+      if (exploreSearchMode === 'AUTHOR') {
+        await executeExploreAuthorSearch(q, eraRange);
+        return;
+      }
+
+      if (authorBadge) authorBadge.classList.add('hidden');
+      const grid = document.getElementById('explore-stream-grid');
       const eraLabel = eraRange ? `（${eraRange.label}）` : '';
       if (grid) {
         grid.innerHTML = `<div class="col-span-full p-10 text-center text-sm font-bold text-md-onSurfaceVariant">『${escapeHtmlAttr(q)}』${eraLabel}を検索しています...</div>`;
@@ -2829,6 +3249,8 @@
       if (input) input.value = '';
       const clearBtn = document.getElementById('explore-clear-btn');
       if (clearBtn) clearBtn.classList.add('hidden');
+      const authorBadge = document.getElementById('explore-author-result-badge');
+      if (authorBadge) authorBadge.classList.add('hidden');
       const loadMoreContainer = document.getElementById('explore-load-more-container');
       if (loadMoreContainer) loadMoreContainer.classList.remove('hidden');
 
@@ -3042,6 +3464,7 @@
 
         <div class="relative aspect-[2/3] rounded-xl overflow-hidden bg-md-surfaceContainerHigh mb-2.5 ${viaMeta.cardBorderClass} ${isMangaStyle ? 'comic-book-cover' : ''}">
           <img src="${cover}" alt="${escapeHtmlAttr(item.title)}" loading="lazy" onerror="this.src='${fallback}'" class="w-full h-full object-cover">
+          ${item.authorName ? `<div class="absolute top-2 left-2 right-2 px-2 py-0.5 rounded bg-black/75 text-white text-[10px] font-extrabold truncate">作者: ${escapeHtmlAttr(item.authorName)}</div>` : ''}
           ${isMangaStyle ? `<div class="absolute bottom-0 inset-x-0 bg-[#8F2456] text-white text-[9px] font-extrabold text-center py-0.5 tracking-wider">COMICS • 単行本カバー</div>` : ''}
           ${via === 'both' ? `<div class="absolute bottom-0 inset-x-0 bg-[#0D6B58] text-white text-[9px] font-extrabold text-center py-0.5 tracking-wider">ANIME & MANGA • 両刀</div>` : ''}
         </div>
@@ -3222,6 +3645,8 @@
       const progState = ensureProgressState(w);
       const progMeta = getProgressStateMeta(progState, w.progressNote);
       const rating = ensureRating(w);
+      const bestRank = ensureBestRank(w);
+      const isBestPinned = w.status === 'love' && bestRank >= 1 && bestRank <= 5;
       const showProgressBadge = w.status !== 'curious';
       const cover = getWorkDisplayImage(w);
       const fallback = via === 'manga' ? makeFallbackMangaUrl(w.title) : makeFallbackPosterUrl(w.title);
@@ -3232,6 +3657,8 @@
         cardWidthClass = 'w-[178px] sm:w-[214px] p-2.5 rounded-2xl gold-medal-card';
       } else if (isSharedHighlight) {
         cardWidthClass = 'w-[204px] sm:w-[248px] p-3 rounded-2xl bg-md-primaryContainer/45 ring-2 ring-md-primary';
+      } else if (isBestPinned) {
+        cardWidthClass = 'w-[162px] sm:w-[198px] p-2 rounded-2xl best-rank-card';
       }
 
       let posterBorderClass = viaMeta.cardBorderClass;
@@ -3239,6 +3666,8 @@
         posterBorderClass = 'gold-medal-poster';
       } else if (isSharedHighlight) {
         posterBorderClass = 'border-md-primary border-2';
+      } else if (isBestPinned) {
+        posterBorderClass = 'best-rank-poster';
       } else if (isVisitingOther && isInMyLibrary) {
         posterBorderClass = 'border-teal-600 border-2';
       }
@@ -3248,6 +3677,13 @@
           onclick="${isVisitingOther ? `toggleWorkInMyLibraryFromVisitorCard(${w.id})` : `openCommentModal(${w.id}, event)`}"
           class="group shrink-0 select-none cursor-pointer flex flex-col ${cardWidthClass}"
         >
+          ${isBestPinned ? `
+            <div class="mb-1.5 flex items-center justify-between px-2.5 py-0.5 rounded-md best-rank-badge text-[10px] font-extrabold tracking-wide">
+              <span>殿堂入り BEST ${bestRank}</span>
+              <span>PINNED</span>
+            </div>
+          ` : ''}
+
           ${isGoldHighlight ? `
             <div class="mb-1.5 flex items-center justify-between px-2 py-0.5 rounded-md gold-medal-badge text-[10px] font-extrabold tracking-wide">
               <span>${matchTier === 'double_gold' ? 'W殿堂入り一致' : '殿堂入り共通'}</span>
@@ -3288,17 +3724,33 @@
             >
 
             ${editable ? `
+              <!-- サムネイル左上：誤登録作品のワンタップ削除ボタン -->
               <button
+                type="button"
+                onclick="removeWorkFromMyProfile(${w.id}, event)"
+                title="この作品をマイプロフィールから削除"
+                class="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-red-700/95 hover:bg-red-800 text-white text-[10px] font-extrabold border border-white/40 shadow-sm z-10"
+              >
+                ✕ 削除
+              </button>
+              <button
+                type="button"
                 onclick="openCommentModal(${w.id}, event)"
-                title="進捗・一言メモを編集"
-                class="absolute top-2.5 right-2.5 px-2.5 py-1 rounded-md bg-md-surfaceContainerLowest/95 text-md-onSurface text-[11px] font-bold border border-md-outlineVariant opacity-0 group-hover:opacity-100 z-10"
+                title="進捗・一言メモ・BEST固定を編集"
+                class="absolute top-2 right-2 px-2 py-0.5 rounded-md bg-md-surfaceContainerLowest/95 text-md-onSurface text-[10px] font-extrabold border border-md-outlineVariant shadow-sm z-10"
               >
                 進捗・メモ
               </button>
             ` : ''}
 
+            ${!editable && isBestPinned ? `
+              <div class="absolute top-2 left-2 px-2 py-0.5 rounded-md best-rank-badge text-[10px] font-extrabold shadow-sm z-10">
+                BEST ${bestRank}
+              </div>
+            ` : ''}
+
             ${isVisitingOther ? `
-              <div class="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-md text-[10px] font-extrabold z-10 ${
+              <div class="absolute top-2 right-2 px-2 py-0.5 rounded-md text-[10px] font-extrabold z-10 ${
                 isInMyLibrary
                   ? 'bg-teal-700 text-white'
                   : 'bg-md-surfaceContainerLowest/90 text-md-onSurface border border-md-outlineVariant'
@@ -3370,6 +3822,23 @@
                   ${rating > 0 ? `★${rating}.0` : '未評価'}
                 </span>
               `}
+            </div>
+          ` : ''}
+
+          <!-- いつでも語れる（殿堂入り）の BEST 1〜5 クイック固定バー（自分のページのみ） -->
+          ${editable && w.status === 'love' ? `
+            <div class="mt-1.5 flex items-center justify-between gap-1 px-1.5 py-1 rounded-lg bg-amber-50/90 border border-amber-300" onclick="event.stopPropagation()">
+              <span class="text-[9px] font-extrabold text-amber-950 shrink-0">BEST固定</span>
+              <div class="flex items-center gap-0.5">
+                ${[1, 2, 3, 4, 5].map(r => `
+                  <button
+                    type="button"
+                    onclick="setWorkBestRank(${w.id}, ${r}, event)"
+                    title="殿堂入り BEST ${r} に固定（再クリックで解除）"
+                    class="w-5 h-5 rounded text-[10px] font-extrabold border ${bestRank === r ? 'bg-[#B45309] text-white border-[#78350F]' : 'bg-white text-amber-950 border-amber-300 hover:bg-amber-100'}"
+                  >${r}</button>
+                `).join('')}
+              </div>
             </div>
           ` : ''}
 
@@ -3650,9 +4119,9 @@
 
       const sharedTierMap = renderSharedWorksShowcase();
 
-      const loveItems = sortProfileWorksList(registered.filter(w => w.status === 'love' && filterWorkByHomeChip(w)));
-      const curiousItems = sortProfileWorksList(registered.filter(w => w.status === 'curious' && filterWorkByHomeChip(w)));
-      const watchedItems = sortProfileWorksList(registered.filter(w => w.status === 'watched' && filterWorkByHomeChip(w)));
+      const loveItems = sortProfileWorksList(registered.filter(w => w.status === 'love' && filterWorkByHomeChip(w)), true);
+      const curiousItems = sortProfileWorksList(registered.filter(w => w.status === 'curious' && filterWorkByHomeChip(w)), false);
+      const watchedItems = sortProfileWorksList(registered.filter(w => w.status === 'watched' && filterWorkByHomeChip(w)), false);
 
       document.getElementById('count-love').textContent = loveItems.length;
       document.getElementById('count-curious').textContent = curiousItems.length;
@@ -3695,6 +4164,7 @@
         const prog = ensureProgressState(w);
         const progMeta = getProgressStateMeta(prog, w.progressNote);
         const rating = ensureRating(w);
+        const bestRank = ensureBestRank(w);
         const cover = getWorkDisplayImage(w);
         const fallback = via === 'manga' ? makeFallbackMangaUrl(w.title) : makeFallbackPosterUrl(w.title);
 
@@ -3713,6 +4183,20 @@
               </div>
 
               <div class="space-y-1.5 pt-2">
+                ${w.status === 'love' ? `
+                  <div class="flex items-center justify-between px-2 py-1 rounded-lg bg-amber-50 border border-amber-300">
+                    <span class="text-[10px] font-extrabold text-amber-950">殿堂 BEST固定</span>
+                    <div class="flex items-center gap-1">
+                      ${[1, 2, 3, 4, 5].map(r => `
+                        <button
+                          type="button"
+                          onclick="setWorkBestRank(${w.id}, ${r}, event)"
+                          class="text-[10px] font-extrabold px-1.5 py-0.5 rounded border ${bestRank === r ? 'bg-[#B45309] text-white border-[#78350F]' : 'bg-white text-amber-900 border-amber-300'}"
+                        >#${r}</button>
+                      `).join('')}
+                    </div>
+                  </div>
+                ` : ''}
                 ${w.status !== 'curious' ? `
                   <div class="flex items-center justify-between px-2 py-1 rounded-lg bg-md-surfaceContainerLow border border-md-outlineVariant">
                     <span class="text-[10px] font-bold text-md-onSurfaceVariant">評価</span>
@@ -3755,6 +4239,7 @@
       const w = targetWorks.find(item => item.id === id);
       if (!w) return;
       w.status = status;
+      if (status !== 'love') w.bestRank = 0;
       if (activeProfileId === loggedInAccountId) works = targetWorks;
       saveStateToStorage();
       renderEditorGrid();
@@ -3811,6 +4296,16 @@
       });
     }
 
+    function selectModalBestRank(rank) {
+      modalTempBestRank = (modalTempBestRank === rank) ? 0 : rank;
+      const activeClass = 'h-9 rounded-xl text-xs font-extrabold border bg-[#B45309] text-white border-[#78350F]';
+      const inactiveClass = 'h-9 rounded-xl text-xs font-semibold border bg-md-surfaceContainerLowest text-md-onSurfaceVariant border-md-outlineVariant';
+      [1, 2, 3, 4, 5].forEach(r => {
+        const el = document.getElementById(`modal-best-${r}`);
+        if (el) el.className = (r === modalTempBestRank) ? activeClass : inactiveClass;
+      });
+    }
+
     function setQuickProgressNote(text) {
       const input = document.getElementById('comment-modal-progress-note');
       if (input) input.value = text;
@@ -3837,9 +4332,15 @@
       selectModalProgressState(ensureProgressState(w));
       modalTempRating = 0;
       selectModalRating(ensureRating(w));
+      modalTempBestRank = 0;
+      selectModalBestRank(ensureBestRank(w));
       const ratingSection = document.getElementById('comment-modal-rating-section');
       if (ratingSection) {
         ratingSection.classList.toggle('hidden', w.status === 'curious');
+      }
+      const bestSection = document.getElementById('comment-modal-best-section');
+      if (bestSection) {
+        bestSection.classList.toggle('hidden', w.status !== 'love');
       }
       document.getElementById('comment-modal').classList.remove('hidden');
       setTimeout(() => document.getElementById('comment-modal-progress-note').focus(), 50);
@@ -3848,6 +4349,13 @@
     function closeCommentModal() {
       editingCommentWorkId = null;
       document.getElementById('comment-modal').classList.add('hidden');
+    }
+
+    function deleteWorkFromCommentModal() {
+      if (editingCommentWorkId === null) return;
+      const idToRemove = editingCommentWorkId;
+      closeCommentModal();
+      removeWorkFromMyProfile(idToRemove);
     }
 
     function saveWorkComment() {
@@ -3859,10 +4367,13 @@
         w.progressState = modalTempProgressState;
         w.progressNote = (document.getElementById('comment-modal-progress-note')?.value || '').trim();
         w.rating = modalTempRating;
+        if (w.status === 'love') {
+          assignBestRankToWork(targetWorks, w.id, modalTempBestRank);
+        }
         saveStateToStorage();
         if (currentTab === 'library') renderEditorGrid();
         renderAll();
-        showToast('進捗・評価・一言メモを保存しました');
+        showToast('進捗・評価・BEST固定・一言メモを保存しました');
       }
       closeCommentModal();
     }
@@ -4039,13 +4550,12 @@
     let latestDirectShareUrl = '';
 
     function openShareModal() {
-      const prof = getActiveProfile();
-      if (!prof) {
-        showToast('共有するプロフィールがありません。先にマイページを作成してください');
-        openAuthModal('register');
-        return;
-      }
-      const loveList = (prof.works || []).filter(w => w.status === 'love').map(w => w.title).slice(0, 5);
+      const loveWorks = (prof.works || []).filter(w => w.status === 'love');
+      const bestFiveList = loveWorks
+        .filter(w => ensureBestRank(w) >= 1 && ensureBestRank(w) <= 5)
+        .sort((a, b) => ensureBestRank(a) - ensureBestRank(b))
+        .map(w => `${ensureBestRank(w)}位:${w.title}`);
+      const loveList = loveWorks.map(w => w.title).slice(0, 5);
       const curiousList = (prof.works || []).filter(w => w.status === 'curious').map(w => w.title).slice(0, 3);
 
       const exportPayload = {
@@ -4061,6 +4571,7 @@
 
       const summary = [
         `【${prof.name} (${prof.handle}) のアニメ・漫画プロフィール】`,
+        bestFiveList.length ? `・マイベスト: ${bestFiveList.join(' / ')}` : '',
         loveList.length ? `・殿堂入り: ${loveList.join(' / ')}` : '',
         curiousList.length ? `・気になってる: ${curiousList.join(' / ')}` : '',
         prof.bio ? `・ひとこと: ${prof.bio}` : '',
@@ -4123,7 +4634,9 @@
             works: decoded.works
           };
           profiles.push(existingProf);
-        } else if (existingProf.ownerAccountId !== loggedInAccountId) {
+        } else {
+          existingProf.name = decoded.name;
+          existingProf.bio = decoded.bio || '';
           existingProf.works = decoded.works;
         }
         activeProfileId = existingProf.id;
@@ -4131,21 +4644,37 @@
         saveStateToStorage();
         closeShareModal();
         renderAll();
-        showToast(`${existingProf.name}さんのプロフィールを読み込みました`);
+        showToast(`『${decoded.name}』のプロフィールを読み込みました`);
       } catch (e) {
         showToast('共有コードの解析に失敗しました');
       }
     }
 
-    function showToast(message) {
+    function showToast(message, options = null) {
       const box = document.getElementById('toast-box');
       if (!box) return;
-      box.textContent = message;
+      box.innerHTML = '';
+      const span = document.createElement('span');
+      span.textContent = message;
+      box.appendChild(span);
+
+      if (options && options.actionLabel && typeof options.onAction === 'function') {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.textContent = options.actionLabel;
+        btn.className = 'px-2.5 py-1 rounded-lg bg-md-primaryContainer text-md-onPrimaryContainer text-[11px] font-extrabold shrink-0';
+        btn.onclick = () => {
+          box.classList.add('hidden');
+          options.onAction();
+        };
+        box.appendChild(btn);
+      }
+
       box.classList.remove('hidden');
       clearTimeout(window.__toastTimer);
       window.__toastTimer = setTimeout(() => {
         box.classList.add('hidden');
-      }, 2600);
+      }, options?.actionLabel ? 4500 : 2600);
     }
 
     // ====================================================
