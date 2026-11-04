@@ -55,10 +55,12 @@
     * {
       font-family: 'Outfit', 'Noto Sans JP', sans-serif;
       box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
     }
     body {
       background-color: #FBF8FF;
       color: #1B1B21;
+      height: 100dvh;
     }
     .material-symbols-rounded {
       font-variation-settings: 'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 24;
@@ -79,11 +81,44 @@
       background-color: #DEE0FF;
       color: #00105C;
     }
+    /* M3 スマホ用下部 Navigation Bar */
+    .m3-bottom-nav-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      padding: 6px 0;
+      color: #46464F;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .m3-bottom-nav-pill {
+      width: 56px;
+      height: 30px;
+      border-radius: 9999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background-color 0.18s ease, color 0.18s ease;
+    }
+    .m3-bottom-nav-item.active {
+      color: #00105C;
+      font-weight: 800;
+    }
+    .m3-bottom-nav-item.active .m3-bottom-nav-pill {
+      background-color: #DEE0FF;
+      color: #00105C;
+    }
     .m3-state-layer:hover {
       filter: brightness(0.96);
     }
+    .m3-state-layer:active {
+      filter: brightness(0.92);
+    }
     .m3-filter-chip {
-      height: 34px;
+      height: 36px;
       padding: 0 14px;
       border-radius: 8px;
       font-size: 12px;
@@ -129,45 +164,63 @@
     }
   </style>
 </head>
-<body class="h-screen w-screen overflow-hidden flex bg-md-surface text-md-onSurface">
+<body class="w-screen overflow-hidden flex bg-md-surface text-md-onSurface">
 
-  <!-- 左ナビゲーションドロワー -->
-  <aside id="ytm-sidebar" class="w-[268px] bg-md-surfaceContainerLow border-r border-md-outlineVariant/60 flex flex-col shrink-0 select-none z-40">
-    <div id="sidebar-top-header" class="h-16 px-4 flex items-center gap-3 shrink-0">
-      <button onclick="toggleSidebarCollapse()" id="sidebar-collapse-btn" class="m3-state-layer w-10 h-10 rounded-full flex items-center justify-center text-md-onSurfaceVariant shrink-0 hover:bg-md-surfaceContainerHigh" title="ナビゲーション開閉">
-        <span class="material-symbols-rounded">menu</span>
-      </button>
-      <div id="sidebar-brand-box" class="sidebar-label flex items-center gap-2.5 cursor-pointer overflow-hidden" onclick="switchTab('home')">
-        <div class="w-8 h-8 rounded-lg bg-md-primary flex items-center justify-center text-md-onPrimary font-extrabold text-sm tracking-tighter shrink-0">
-          AC
+  <!-- スマホ用 M3 モーダルドロワー背景スクリム -->
+  <div id="mobile-drawer-scrim" onclick="closeMobileDrawer()" class="fixed inset-0 bg-black/45 z-40 hidden md:hidden transition-opacity"></div>
+
+  <!-- 左ナビゲーションドロワー（スマホではスライド式モーダルドロワー / PCでは常時表示） -->
+  <aside id="ytm-sidebar" class="fixed inset-y-0 left-0 z-50 w-[284px] md:w-[268px] bg-md-surfaceContainerLow border-r border-md-outlineVariant/60 flex flex-col shrink-0 select-none transform -translate-x-full md:static md:translate-x-0 transition-transform duration-200 ease-out rounded-r-[28px] md:rounded-none shadow-2xl md:shadow-none">
+    <div id="sidebar-top-header" class="h-16 px-4 flex items-center justify-between md:justify-start gap-3 shrink-0">
+      <div class="flex items-center gap-3 min-w-0">
+        <button onclick="toggleSidebarCollapse()" id="sidebar-collapse-btn" class="m3-state-layer w-10 h-10 rounded-full flex items-center justify-center text-md-onSurfaceVariant shrink-0 hover:bg-md-surfaceContainerHigh" title="ナビゲーション開閉">
+          <span class="material-symbols-rounded">menu</span>
+        </button>
+        <div id="sidebar-brand-box" class="sidebar-label flex items-center gap-2.5 cursor-pointer overflow-hidden" onclick="switchTab('home')">
+          <div class="w-8 h-8 rounded-lg bg-md-primary flex items-center justify-center text-md-onPrimary font-extrabold text-sm tracking-tighter shrink-0">
+            AC
+          </div>
+          <span class="font-extrabold text-xl tracking-tight text-md-onSurface truncate">AniCard</span>
         </div>
-        <span class="font-extrabold text-xl tracking-tight text-md-onSurface truncate">AniCard</span>
       </div>
+      <button onclick="closeMobileDrawer()" class="md:hidden w-9 h-9 rounded-full flex items-center justify-center text-md-onSurfaceVariant hover:bg-md-surfaceContainerHigh" title="閉じる">
+        <span class="material-symbols-rounded text-xl">close</span>
+      </button>
     </div>
 
     <!-- メインナビゲーション -->
     <nav class="px-3 py-1 space-y-1 shrink-0">
       <button onclick="switchTab('home')" id="nav-btn-home" class="m3-nav-item m3-state-layer active w-full text-left">
+        <span class="material-symbols-rounded text-xl shrink-0">person</span>
         <span class="sidebar-mini-label hidden text-xs font-extrabold mx-auto">マイ</span>
         <span class="sidebar-label">マイプロフィール</span>
       </button>
 
       <button onclick="switchTab('seasonal')" id="nav-btn-seasonal" class="m3-nav-item m3-state-layer w-full text-left justify-between">
+        <div class="flex items-center gap-3 min-w-0">
+          <span class="material-symbols-rounded text-xl shrink-0">live_tv</span>
+          <span class="sidebar-label truncate">今期のアニメ</span>
+        </div>
         <span class="sidebar-mini-label hidden text-xs font-extrabold mx-auto">今期</span>
-        <span class="sidebar-label">今期のアニメ</span>
-        <span id="nav-seasonal-badge" class="sidebar-label text-[11px] font-bold px-2 py-0.5 rounded-full bg-md-primaryContainer text-md-onPrimaryContainer">放送中</span>
+        <span id="nav-seasonal-badge" class="sidebar-label text-[11px] font-bold px-2 py-0.5 rounded-full bg-md-primaryContainer text-md-onPrimaryContainer shrink-0">放送中</span>
       </button>
 
       <button onclick="switchTab('edit')" id="nav-btn-edit" class="m3-nav-item m3-state-layer w-full text-left justify-between">
+        <div class="flex items-center gap-3 min-w-0">
+          <span class="material-symbols-rounded text-xl shrink-0">explore</span>
+          <span class="sidebar-label truncate">探索・作品追加</span>
+        </div>
         <span class="sidebar-mini-label hidden text-xs font-extrabold mx-auto">探索</span>
-        <span class="sidebar-label">探索・作品追加</span>
-        <span id="nav-edit-lock-badge" class="sidebar-label text-[10px] font-bold px-2 py-0.5 rounded-full bg-md-surfaceContainerHighest text-md-onSurfaceVariant">マイ編集</span>
+        <span id="nav-edit-lock-badge" class="sidebar-label text-[10px] font-bold px-2 py-0.5 rounded-full bg-md-surfaceContainerHighest text-md-onSurfaceVariant shrink-0">マイ編集</span>
       </button>
 
       <button onclick="switchTab('library')" id="nav-btn-library" class="m3-nav-item m3-state-layer w-full text-left justify-between">
+        <div class="flex items-center gap-3 min-w-0">
+          <span class="material-symbols-rounded text-xl shrink-0">bookmarks</span>
+          <span class="sidebar-label truncate">ライブラリ管理</span>
+        </div>
         <span class="sidebar-mini-label hidden text-xs font-extrabold mx-auto">管理</span>
-        <span class="sidebar-label">ライブラリ管理</span>
-        <span id="nav-badge-count" class="sidebar-label text-xs font-bold px-2.5 py-0.5 rounded-full bg-md-surfaceContainerHigh text-md-onSurfaceVariant">0</span>
+        <span id="nav-badge-count" class="sidebar-label text-xs font-bold px-2.5 py-0.5 rounded-full bg-md-surfaceContainerHigh text-md-onSurfaceVariant shrink-0">0</span>
       </button>
     </nav>
 
@@ -179,22 +232,25 @@
           <span class="text-[10px] font-extrabold uppercase tracking-wider text-md-primary">マイアカウント</span>
           <button onclick="openAuthModal('login')" class="text-[11px] font-bold text-md-primary hover:underline">ログイン・切替</button>
         </div>
-        <div>
-          <p id="sidebar-auth-name" class="font-extrabold text-sm text-md-onSurface truncate">未ログイン（ゲスト）</p>
-          <p id="sidebar-auth-handle" class="text-xs font-semibold text-md-onSurfaceVariant truncate">マイページを作成してください</p>
+        <div class="flex items-center gap-2.5 min-w-0">
+          <img id="sidebar-auth-avatar" src="" alt="avatar" class="w-10 h-10 rounded-full object-cover border border-md-outlineVariant shrink-0 bg-md-surfaceContainerHigh">
+          <div class="min-w-0 flex-1">
+            <p id="sidebar-auth-name" class="font-extrabold text-sm text-md-onSurface truncate">未ログイン（ゲスト）</p>
+            <p id="sidebar-auth-handle" class="text-xs font-semibold text-md-onSurfaceVariant truncate">マイページを作成してください</p>
+          </div>
         </div>
         <div class="grid grid-cols-2 gap-1.5 pt-1">
-          <button onclick="jumpToMyOwnProfile()" id="sidebar-my-page-btn" class="m3-state-layer py-1.5 px-2 rounded-lg bg-md-primaryContainer text-md-onPrimaryContainer text-xs font-bold text-center">
+          <button onclick="jumpToMyOwnProfile()" id="sidebar-my-page-btn" class="m3-state-layer py-2 px-2 rounded-xl bg-md-primaryContainer text-md-onPrimaryContainer text-xs font-bold text-center">
             マイページへ
           </button>
-          <button onclick="openAuthModal('register')" class="m3-state-layer py-1.5 px-2 rounded-lg bg-md-surfaceContainerHigh text-md-onSurface text-xs font-bold text-center">
+          <button onclick="openAuthModal('register')" class="m3-state-layer py-2 px-2 rounded-xl bg-md-surfaceContainerHigh text-md-onSurface text-xs font-bold text-center">
             ＋ 新規作成
           </button>
         </div>
       </div>
 
       <!-- 公開プロフィール一覧 -->
-      <div class="space-y-2">
+      <div class="space-y-2 pb-6">
         <div class="flex items-center justify-between px-1">
           <span class="text-xs font-extrabold text-md-onSurfaceVariant">登録メンバー一覧</span>
           <div class="flex items-center gap-2">
@@ -209,57 +265,65 @@
 
   <!-- メインコンテンツ領域 -->
   <div class="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
-    <!-- 上部ヘッダーバー -->
-    <header class="h-16 px-4 sm:px-8 border-b border-md-outlineVariant/60 bg-md-surface flex items-center justify-between gap-4 shrink-0 z-30">
-      <!-- 検索バー -->
-      <div class="relative flex-1 max-w-md">
+    <!-- M3 Top App Bar（スマホ＆PCレスポンシブヘッダー） -->
+    <header class="h-14 sm:h-16 px-3 sm:px-6 border-b border-md-outlineVariant/60 bg-md-surface flex items-center justify-between gap-2 sm:gap-4 shrink-0 z-30">
+      <!-- スマホ用メニューボタン（メンバー＆アカウントドロワー開閉） -->
+      <button onclick="openMobileDrawer()" class="md:hidden m3-state-layer w-10 h-10 rounded-full flex items-center justify-center text-md-onSurface shrink-0 hover:bg-md-surfaceContainerHigh" title="メニュー・メンバー一覧">
+        <span class="material-symbols-rounded">menu</span>
+      </button>
+
+      <!-- M3 Search Bar -->
+      <div class="relative flex-1 max-w-md min-w-0">
         <input
           type="text"
           id="header-quick-search"
-          placeholder="アニメ・漫画タイトルを検索してマイライブラリに追加..."
+          placeholder="作品タイトルを検索..."
           onkeydown="if(event.key==='Enter') triggerHeaderQuickSearch()"
-          class="w-full h-10 pl-4 pr-16 rounded-full bg-md-surfaceContainerHigh text-sm text-md-onSurface placeholder-md-onSurfaceVariant focus:outline-none focus:ring-2 focus:ring-md-primary"
+          class="w-full h-9 sm:h-10 pl-3.5 pr-14 rounded-full bg-md-surfaceContainerHigh text-xs sm:text-sm text-md-onSurface placeholder-md-onSurfaceVariant focus:outline-none focus:ring-2 focus:ring-md-primary"
         >
-        <button onclick="triggerHeaderQuickSearch()" class="absolute right-2 top-1.5 h-7 px-3 rounded-full bg-md-primary text-md-onPrimary text-xs font-bold">
+        <button onclick="triggerHeaderQuickSearch()" class="absolute right-1.5 top-1 sm:top-1.5 h-7 px-3 rounded-full bg-md-primary text-md-onPrimary text-[11px] sm:text-xs font-bold">
           検索
         </button>
       </div>
 
       <!-- 右側アクションボタン群 -->
-      <div class="flex items-center gap-2 shrink-0">
-        <button onclick="if(window.__manualCloudSync) window.__manualCloudSync()" id="header-manual-sync-btn" title="クラウドから最新のプロフィール一覧を手動で読み込み・保存します" class="m3-state-layer h-9 px-3.5 rounded-full bg-md-surfaceContainerHigh border border-md-outlineVariant text-xs font-extrabold text-md-primary cursor-pointer">
-          手動で同期・読込
+      <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+        <button onclick="if(window.__manualCloudSync) window.__manualCloudSync()" id="header-manual-sync-btn" title="クラウドから最新のプロフィール一覧を手動で読み込み・保存します" class="m3-state-layer h-9 px-2.5 sm:px-3.5 rounded-full bg-md-surfaceContainerHigh border border-md-outlineVariant text-[11px] sm:text-xs font-extrabold text-md-primary cursor-pointer flex items-center gap-1">
+          <span class="material-symbols-rounded text-base">sync</span>
+          <span class="hidden sm:inline">手動で同期・読込</span>
+          <span class="sm:hidden">同期</span>
         </button>
-        <button onclick="openCloudDiagModal()" id="cloud-sync-indicator" title="クリックでクラウド接続状態の詳細を表示" class="m3-state-layer px-3 py-1 rounded-full text-[11px] font-bold bg-md-surfaceContainerHigh text-md-onSurfaceVariant cursor-pointer">
+        <button onclick="openCloudDiagModal()" id="cloud-sync-indicator" title="クリックでクラウド接続状態の詳細を表示" class="m3-state-layer px-2.5 sm:px-3 py-1 rounded-full text-[10px] sm:text-[11px] font-bold bg-md-surfaceContainerHigh text-md-onSurfaceVariant cursor-pointer">
           初回読込中
         </button>
-        <span id="header-permission-pill" class="px-3 py-1 rounded-full text-xs font-extrabold bg-md-secondaryContainer text-md-onSecondaryContainer">
+        <span id="header-permission-pill" class="hidden lg:inline-block px-3 py-1 rounded-full text-xs font-extrabold bg-md-secondaryContainer text-md-onSecondaryContainer">
           ゲスト閲覧中
         </span>
-        <button onclick="openShareModal()" class="m3-state-layer h-9 px-4 rounded-full bg-md-primary text-md-onPrimary text-xs font-bold">
-          共有・URL
+        <button onclick="openShareModal()" class="m3-state-layer h-9 px-3 sm:px-4 rounded-full bg-md-primary text-md-onPrimary text-[11px] sm:text-xs font-bold flex items-center gap-1">
+          <span class="material-symbols-rounded text-base">share</span>
+          <span class="hidden sm:inline">共有・URL</span>
         </button>
       </div>
     </header>
 
-    <!-- スクロール可能なメインビューポート -->
-    <main id="ytm-main-scroll" class="flex-1 overflow-y-auto px-4 sm:px-8 py-6 space-y-8">
+    <!-- スクロール可能なメインビューポート（スマホでは下部ナビの分 pb-24 を確保） -->
+    <main id="ytm-main-scroll" class="flex-1 overflow-y-auto px-3 sm:px-8 pt-4 pb-24 md:pb-8 space-y-6 sm:space-y-8">
 
       <!-- ========================================== -->
       <!-- VIEW 1: マイプロフィール（ホーム） -->
       <!-- ========================================== -->
-      <div id="view-home" class="space-y-8 max-w-[1400px] mx-auto">
+      <div id="view-home" class="space-y-6 sm:space-y-8 max-w-[1400px] mx-auto">
 
         <!-- 未登録時のウェルカム案内バナー -->
-        <section id="empty-onboarding-banner" class="hidden p-8 rounded-[24px] bg-md-surfaceContainerLowest border-2 border-md-primary text-center space-y-4">
+        <section id="empty-onboarding-banner" class="hidden p-5 sm:p-8 rounded-[24px] bg-md-surfaceContainerLowest border-2 border-md-primary text-center space-y-4">
           <div class="space-y-1.5">
             <span class="text-xs font-extrabold uppercase tracking-wider text-md-primary">WELCOME TO ANICARD</span>
-            <h2 class="text-2xl font-extrabold text-md-onSurface">まだプロフィールが登録されていません</h2>
-            <p class="text-xs sm:text-sm text-md-onSurfaceVariant max-w-xl mx-auto">
+            <h2 class="text-xl sm:text-2xl font-extrabold text-md-onSurface">まだプロフィールが登録されていません</h2>
+            <p class="text-xs sm:text-sm text-md-onSurfaceVariant max-w-xl mx-auto leading-relaxed">
               「新規マイページを作成」からあなたのアカウント（表示名・ID・編集保護パスワード）を作成すると、履修したアニメや漫画を登録してメンバーと共有できるようになります。
             </p>
           </div>
-          <div class="flex items-center justify-center gap-3 pt-1">
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-2.5 sm:gap-3 pt-1">
             <button onclick="openAuthModal('register')" class="m3-state-layer h-11 px-6 rounded-full bg-md-primary text-md-onPrimary text-xs font-extrabold">
               ＋ 新規マイページを作成する
             </button>
@@ -270,41 +334,56 @@
         </section>
 
         <!-- プロフィールヘッダーカード -->
-        <section id="profile-header-card" class="p-6 rounded-[24px] bg-md-surfaceContainerLowest border border-md-outlineVariant shadow-sm space-y-4">
-          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div class="space-y-1.5">
-              <div class="flex items-center gap-2.5 flex-wrap">
-                <h1 id="profile-display-name" class="text-2xl sm:text-3xl font-extrabold text-md-onSurface tracking-tight">プロフィール未選択</h1>
-                <span id="profile-display-handle" class="text-sm font-bold px-2.5 py-0.5 rounded-full bg-md-surfaceContainerHigh text-md-onSurfaceVariant">@---</span>
-                <span id="profile-ownership-badge" class="text-xs font-extrabold px-2.5 py-0.5 rounded-full bg-md-primaryContainer text-md-onPrimaryContainer">---</span>
+        <section id="profile-header-card" class="p-4 sm:p-6 rounded-[24px] bg-md-surfaceContainerLowest border border-md-outlineVariant shadow-sm space-y-3.5 sm:space-y-4">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-3.5 sm:space-y-0">
+            <div class="flex items-start sm:items-center gap-3.5 sm:gap-4 min-w-0">
+              <!-- プロフィールアイコン（自分のページではタップで画像変更可能） -->
+              <div id="profile-avatar-wrapper" onclick="if(isCurrentProfileEditable()) openProfileEditModal()" class="relative w-16 h-16 sm:w-20 sm:h-20 rounded-full shrink-0 group select-none">
+                <img id="profile-display-avatar" src="" alt="プロフィールアイコン" class="w-full h-full rounded-full object-cover border-2 border-md-primary/40 bg-md-surfaceContainerHigh shadow-sm">
+                <div id="profile-avatar-edit-overlay" class="hidden absolute inset-0 rounded-full bg-black/45 text-white flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                  <span class="material-symbols-rounded text-lg">photo_camera</span>
+                  <span class="text-[9px] font-extrabold">変更</span>
+                </div>
               </div>
-              <p id="profile-display-bio" class="text-sm text-md-onSurfaceVariant max-w-3xl leading-relaxed"></p>
+
+              <div class="space-y-1.5 min-w-0 flex-1">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <h1 id="profile-display-name" class="text-xl sm:text-3xl font-extrabold text-md-onSurface tracking-tight">プロフィール未選択</h1>
+                  <span id="profile-display-handle" class="text-xs sm:text-sm font-bold px-2.5 py-0.5 rounded-full bg-md-surfaceContainerHigh text-md-onSurfaceVariant">@---</span>
+                  <span id="profile-ownership-badge" class="text-[11px] sm:text-xs font-extrabold px-2.5 py-0.5 rounded-full bg-md-primaryContainer text-md-onPrimaryContainer">---</span>
+                </div>
+                <p id="profile-display-bio" class="text-xs sm:text-sm text-md-onSurfaceVariant max-w-3xl leading-relaxed"></p>
+              </div>
             </div>
 
             <!-- プロフィール操作ボタン群 -->
             <div class="flex items-center gap-2 flex-wrap shrink-0">
-              <button id="edit-profile-btn" onclick="openProfileEditModal()" class="m3-state-layer h-10 px-4 rounded-full border border-md-outline bg-md-surfaceContainerLowest text-xs font-bold text-md-onSurface">
+              <button onclick="openMobileDrawer()" class="md:hidden m3-state-layer h-9 px-3.5 rounded-full bg-md-secondaryContainer text-md-onSecondaryContainer text-xs font-extrabold flex items-center gap-1">
+                <span class="material-symbols-rounded text-base">group</span>
+                <span>他メンバーを見る</span>
+              </button>
+              <button id="edit-profile-btn" onclick="openProfileEditModal()" class="m3-state-layer h-9 sm:h-10 px-3.5 sm:px-4 rounded-full border border-md-outline bg-md-surfaceContainerLowest text-xs font-bold text-md-onSurface">
                 プロフィール編集
               </button>
-              <button id="delete-profile-btn" onclick="openDeleteProfileModal(activeProfileId, event)" class="m3-state-layer h-10 px-4 rounded-full border border-red-400 bg-red-50 text-xs font-bold text-red-900">
-                プロフィール削除
+              <button id="delete-profile-btn" onclick="openDeleteProfileModal(activeProfileId, event)" class="m3-state-layer h-9 sm:h-10 px-3.5 sm:px-4 rounded-full border border-red-400 bg-red-50 text-xs font-bold text-red-900">
+                削除
               </button>
-              <button id="go-explore-btn" onclick="switchTab('edit')" class="m3-state-layer h-10 px-4 rounded-full bg-md-primary text-md-onPrimary text-xs font-bold">
-                ＋ 作品を追加・探索
+              <button id="go-explore-btn" onclick="switchTab('edit')" class="m3-state-layer h-9 sm:h-10 px-4 rounded-full bg-md-primary text-md-onPrimary text-xs font-bold">
+                ＋ 作品を追加
               </button>
-              <button id="shared-highlight-btn" onclick="toggleSharedWorksHighlight()" class="hidden m3-state-layer h-10 px-5 rounded-full bg-md-primary text-md-onPrimary text-xs font-extrabold">
+              <button id="shared-highlight-btn" onclick="toggleSharedWorksHighlight()" class="hidden w-full sm:w-auto m3-state-layer h-10 px-4 sm:px-5 rounded-full bg-md-primary text-md-onPrimary text-xs font-extrabold">
                 自分と同じ履修作品を大きくハイライト表示
               </button>
             </div>
           </div>
 
-          <!-- 統計サマリーピル -->
-          <div class="flex items-center gap-2 flex-wrap pt-2 border-t border-md-outlineVariant/50 text-xs font-bold">
-            <span class="px-3 py-1 rounded-lg bg-md-surfaceContainer text-md-onSurface">登録作品 <strong id="stat-total-count">0</strong></span>
-            <span class="px-3 py-1 rounded-lg bg-md-primaryContainer text-md-onPrimaryContainer">アニメ派 <strong id="stat-anime-count">0</strong></span>
-            <span class="px-3 py-1 rounded-lg bg-md-tertiaryContainer text-md-onTertiaryContainer">漫画・原作派 <strong id="stat-manga-count">0</strong></span>
-            <span class="px-3 py-1 rounded-lg bg-md-secondaryContainer text-md-onSecondaryContainer">両刀(アニメ&漫画) <strong id="stat-both-count">0</strong></span>
-            <span class="px-3 py-1 rounded-lg bg-amber-100 text-amber-950 border border-amber-400">途中まで・未完走 <strong id="stat-incomplete-count">0</strong></span>
+          <!-- 統計サマリーピル（スマホでは横スクロール対応で省スペース化） -->
+          <div class="flex items-center gap-1.5 sm:gap-2 overflow-x-auto ytm-shelf-scroll pt-2 border-t border-md-outlineVariant/50 text-[11px] sm:text-xs font-bold">
+            <span class="px-2.5 sm:px-3 py-1 rounded-lg bg-md-surfaceContainer text-md-onSurface shrink-0">登録 <strong id="stat-total-count">0</strong></span>
+            <span class="px-2.5 sm:px-3 py-1 rounded-lg bg-md-primaryContainer text-md-onPrimaryContainer shrink-0">アニメ派 <strong id="stat-anime-count">0</strong></span>
+            <span class="px-2.5 sm:px-3 py-1 rounded-lg bg-md-tertiaryContainer text-md-onTertiaryContainer shrink-0">漫画派 <strong id="stat-manga-count">0</strong></span>
+            <span class="px-2.5 sm:px-3 py-1 rounded-lg bg-md-secondaryContainer text-md-onSecondaryContainer shrink-0">両刀 <strong id="stat-both-count">0</strong></span>
+            <span class="px-2.5 sm:px-3 py-1 rounded-lg bg-amber-100 text-amber-950 border border-amber-400 shrink-0">途中・未完走 <strong id="stat-incomplete-count">0</strong></span>
           </div>
         </section>
 
@@ -573,13 +652,47 @@
       </div>
 
     </main>
+
+    <!-- スマホ専用 Material Design 3 Navigation Bar（ボトムナビゲーション） -->
+    <nav id="m3-mobile-bottom-nav" class="md:hidden fixed bottom-0 inset-x-0 h-[68px] bg-md-surfaceContainer border-t border-md-outlineVariant/70 flex items-center justify-around px-1 z-30 select-none">
+      <button onclick="switchTab('home')" id="mnav-btn-home" class="m3-bottom-nav-item active">
+        <div class="m3-bottom-nav-pill">
+          <span class="material-symbols-rounded text-[22px]">person</span>
+        </div>
+        <span>マイページ</span>
+      </button>
+      <button onclick="switchTab('seasonal')" id="mnav-btn-seasonal" class="m3-bottom-nav-item">
+        <div class="m3-bottom-nav-pill">
+          <span class="material-symbols-rounded text-[22px]">live_tv</span>
+        </div>
+        <span>今期アニメ</span>
+      </button>
+      <button onclick="switchTab('edit')" id="mnav-btn-edit" class="m3-bottom-nav-item">
+        <div class="m3-bottom-nav-pill">
+          <span class="material-symbols-rounded text-[22px]">explore</span>
+        </div>
+        <span>探索・追加</span>
+      </button>
+      <button onclick="switchTab('library')" id="mnav-btn-library" class="m3-bottom-nav-item">
+        <div class="m3-bottom-nav-pill">
+          <span class="material-symbols-rounded text-[22px]">bookmarks</span>
+        </div>
+        <span>管理</span>
+      </button>
+      <button onclick="openMobileDrawer()" id="mnav-btn-members" class="m3-bottom-nav-item">
+        <div class="m3-bottom-nav-pill">
+          <span class="material-symbols-rounded text-[22px]">group</span>
+        </div>
+        <span>メンバー</span>
+      </button>
+    </nav>
   </div>
 
   <!-- ========================================== -->
   <!-- MODAL 1: アカウント認証（ログイン / 新規マイページ作成） -->
   <!-- ========================================== -->
-  <div id="auth-modal" class="fixed inset-0 z-50 hidden bg-black/50 flex items-center justify-center p-4">
-    <div class="bg-md-surfaceContainerHigh border border-md-outlineVariant rounded-[28px] max-w-md w-full p-6 space-y-5 shadow-xl">
+  <div id="auth-modal" class="fixed inset-0 z-50 hidden bg-black/50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="bg-md-surfaceContainerHigh border border-md-outlineVariant rounded-t-[28px] sm:rounded-[28px] max-w-md w-full max-h-[90dvh] overflow-y-auto p-5 sm:p-6 space-y-5 shadow-xl">
       <div class="flex items-center justify-between">
         <h3 class="font-extrabold text-lg text-md-onSurface">アカウント管理・マイページ作成</h3>
         <button onclick="closeAuthModal()" class="text-md-onSurfaceVariant text-sm font-bold px-2 py-1">✕</button>
@@ -618,9 +731,25 @@
       </div>
 
       <div id="auth-panel-register" class="hidden space-y-3.5">
+        <div class="p-3 rounded-2xl bg-md-surfaceContainerLowest border border-md-outlineVariant flex items-center gap-3.5">
+          <img id="reg-avatar-preview" src="" alt="アイコンプレビュー" class="w-14 h-14 rounded-full object-cover border border-md-outlineVariant shrink-0 bg-md-surfaceContainerHigh">
+          <div class="space-y-1.5 flex-1 min-w-0">
+            <label class="text-xs font-bold text-md-onSurface block">プロフィールアイコン（任意）</label>
+            <div class="flex items-center gap-2 flex-wrap">
+              <label class="m3-state-layer cursor-pointer px-3 py-1.5 rounded-full bg-md-primaryContainer text-md-onPrimaryContainer text-xs font-extrabold inline-flex items-center gap-1">
+                <span class="material-symbols-rounded text-sm">upload</span>
+                <span>画像を選択</span>
+                <input type="file" id="reg-avatar-file" accept="image/*" onchange="handleAvatarFileSelect(event, 'reg')" class="hidden">
+              </label>
+              <button type="button" onclick="clearAvatarSelection('reg')" class="px-2.5 py-1 rounded-full bg-md-surfaceContainerHigh text-md-onSurfaceVariant text-[11px] font-bold">
+                自動アイコンに戻す
+              </button>
+            </div>
+          </div>
+        </div>
         <div>
           <label class="text-xs font-bold text-md-onSurfaceVariant block mb-1">表示名（ニックネーム）</label>
-          <input type="text" id="reg-name-input" placeholder="例: カイト" maxlength="20" class="w-full h-10 px-3.5 rounded-xl bg-md-surfaceContainerLowest border border-md-outline text-sm text-md-onSurface">
+          <input type="text" id="reg-name-input" oninput="updateRegDefaultAvatarPreview()" placeholder="例: カイト" maxlength="20" class="w-full h-10 px-3.5 rounded-xl bg-md-surfaceContainerLowest border border-md-outline text-sm text-md-onSurface">
         </div>
         <div>
           <label class="text-xs font-bold text-md-onSurfaceVariant block mb-1">アカウントID（半角英数字・アンダースコア）</label>
@@ -644,15 +773,35 @@
   <!-- ========================================== -->
   <!-- MODAL 2: プロフィール基本情報編集（オーナー専用） -->
   <!-- ========================================== -->
-  <div id="profile-edit-modal" class="fixed inset-0 z-50 hidden bg-black/50 flex items-center justify-center p-4">
-    <div class="bg-md-surfaceContainerHigh border border-md-outlineVariant rounded-[28px] max-w-md w-full p-6 space-y-4 shadow-xl">
+  <div id="profile-edit-modal" class="fixed inset-0 z-50 hidden bg-black/50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="bg-md-surfaceContainerHigh border border-md-outlineVariant rounded-t-[28px] sm:rounded-[28px] max-w-md w-full max-h-[90dvh] overflow-y-auto p-5 sm:p-6 space-y-4 shadow-xl">
       <div class="flex items-center justify-between">
-        <h3 class="font-extrabold text-base text-md-onSurface">マイプロフィール情報の編集</h3>
+        <h3 class="font-extrabold text-base text-md-onSurface">マイプロフィール・アイコン編集</h3>
         <button onclick="closeProfileEditModal()" class="text-md-onSurfaceVariant text-sm font-bold">✕</button>
       </div>
+
+      <!-- アイコン画像アップロード枠 -->
+      <div class="p-3.5 rounded-2xl bg-md-surfaceContainerLowest border border-md-outlineVariant flex items-center gap-4">
+        <img id="edit-avatar-preview" src="" alt="アイコンプレビュー" class="w-16 h-16 rounded-full object-cover border-2 border-md-primary/40 shrink-0 bg-md-surfaceContainerHigh">
+        <div class="space-y-1.5 flex-1 min-w-0">
+          <label class="text-xs font-extrabold text-md-onSurface block">アイコン画像の設定</label>
+          <p class="text-[11px] text-md-onSurfaceVariant leading-tight">正方形に自動トリミング＆軽量化されてクラウドへ保存されます</p>
+          <div class="flex items-center gap-2 flex-wrap pt-0.5">
+            <label class="m3-state-layer cursor-pointer px-3.5 py-1.5 rounded-full bg-md-primary text-md-onPrimary text-xs font-extrabold inline-flex items-center gap-1">
+              <span class="material-symbols-rounded text-sm">upload</span>
+              <span>画像をアップロード</span>
+              <input type="file" id="edit-avatar-file" accept="image/*" onchange="handleAvatarFileSelect(event, 'edit')" class="hidden">
+            </label>
+            <button type="button" onclick="clearAvatarSelection('edit')" class="px-3 py-1.5 rounded-full bg-md-surfaceContainerHigh text-md-onSurfaceVariant text-[11px] font-bold">
+              初期アイコンに戻す
+            </button>
+          </div>
+        </div>
+      </div>
+
       <div>
         <label class="text-xs font-bold text-md-onSurfaceVariant block mb-1">表示名</label>
-        <input type="text" id="edit-profile-name" maxlength="24" class="w-full h-10 px-3.5 rounded-xl bg-md-surfaceContainerLowest border border-md-outline text-sm text-md-onSurface">
+        <input type="text" id="edit-profile-name" oninput="updateEditDefaultAvatarPreview()" maxlength="24" class="w-full h-10 px-3.5 rounded-xl bg-md-surfaceContainerLowest border border-md-outline text-sm text-md-onSurface">
       </div>
       <div>
         <label class="text-xs font-bold text-md-onSurfaceVariant block mb-1">自己紹介・ひとこと</label>
@@ -668,8 +817,8 @@
   <!-- ========================================== -->
   <!-- MODAL 3: 共有・コード入出力モーダル -->
   <!-- ========================================== -->
-  <div id="share-modal" class="fixed inset-0 z-50 hidden bg-black/50 flex items-center justify-center p-4">
-    <div class="bg-md-surfaceContainerHigh border border-md-outlineVariant rounded-[28px] max-w-lg w-full p-6 space-y-4 shadow-xl">
+  <div id="share-modal" class="fixed inset-0 z-50 hidden bg-black/50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="bg-md-surfaceContainerHigh border border-md-outlineVariant rounded-t-[28px] sm:rounded-[28px] max-w-lg w-full max-h-[90dvh] overflow-y-auto p-5 sm:p-6 space-y-4 shadow-xl">
       <div class="flex items-center justify-between">
         <h3 class="font-extrabold text-base text-md-onSurface">プロフィールの共有・データ読込</h3>
         <button onclick="closeShareModal()" class="text-md-onSurfaceVariant text-sm font-bold">✕</button>
@@ -709,8 +858,8 @@
   <!-- ========================================== -->
   <!-- MODAL 4: プロフィール削除確認モーダル -->
   <!-- ========================================== -->
-  <div id="delete-profile-modal" class="fixed inset-0 z-50 hidden bg-black/50 flex items-center justify-center p-4">
-    <div class="bg-md-surfaceContainerHigh border border-md-outlineVariant rounded-[28px] max-w-md w-full p-6 space-y-4 shadow-xl">
+  <div id="delete-profile-modal" class="fixed inset-0 z-50 hidden bg-black/50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="bg-md-surfaceContainerHigh border border-md-outlineVariant rounded-t-[28px] sm:rounded-[28px] max-w-md w-full max-h-[90dvh] overflow-y-auto p-5 sm:p-6 space-y-4 shadow-xl">
       <div class="flex items-center justify-between">
         <h3 class="font-extrabold text-base text-md-onSurface">プロフィールの削除</h3>
         <button onclick="closeDeleteProfileModal()" class="text-md-onSurfaceVariant text-sm font-bold">✕</button>
@@ -731,8 +880,8 @@
   <!-- ========================================== -->
   <!-- MODAL 4.5: クラウド同期診断・ステータスモーダル -->
   <!-- ========================================== -->
-  <div id="cloud-diag-modal" class="fixed inset-0 z-50 hidden bg-black/50 flex items-center justify-center p-4">
-    <div class="bg-md-surfaceContainerHigh border border-md-outlineVariant rounded-[28px] max-w-lg w-full p-6 space-y-4 shadow-xl">
+  <div id="cloud-diag-modal" class="fixed inset-0 z-50 hidden bg-black/50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="bg-md-surfaceContainerHigh border border-md-outlineVariant rounded-t-[28px] sm:rounded-[28px] max-w-lg w-full max-h-[90dvh] overflow-y-auto p-5 sm:p-6 space-y-4 shadow-xl">
       <div class="flex items-center justify-between">
         <h3 class="font-extrabold text-base text-md-onSurface">クラウド同期ステータス・接続診断</h3>
         <button onclick="closeCloudDiagModal()" class="text-md-onSurfaceVariant text-sm font-bold">✕</button>
@@ -786,8 +935,8 @@
   <!-- ========================================== -->
   <!-- MODAL 5: 一言コメント・進捗編集モーダル -->
   <!-- ========================================== -->
-  <div id="comment-modal" class="fixed inset-0 z-50 hidden bg-black/50 flex items-center justify-center p-4">
-    <div class="bg-md-surfaceContainerHigh border border-md-outlineVariant rounded-[28px] max-w-md w-full p-6 space-y-4 shadow-xl">
+  <div id="comment-modal" class="fixed inset-0 z-50 hidden bg-black/50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="bg-md-surfaceContainerHigh border border-md-outlineVariant rounded-t-[28px] sm:rounded-[28px] max-w-md w-full max-h-[90dvh] overflow-y-auto p-5 sm:p-6 space-y-4 shadow-xl">
       <div class="flex items-center justify-between">
         <h3 class="font-extrabold text-base text-md-onSurface">進捗状況・一言メモの編集</h3>
         <button onclick="closeCommentModal()" class="text-md-onSurfaceVariant text-sm font-bold">✕</button>
@@ -853,8 +1002,8 @@
     </div>
   </div>
 
-  <!-- トースト通知 -->
-  <div id="toast-box" class="fixed bottom-5 right-5 z-50 hidden px-5 py-3 rounded-xl bg-md-inverseSurface text-md-inverseOnSurface text-xs font-bold shadow-lg"></div>
+  <!-- トースト通知（スマホではボトムナビの上に表示） -->
+  <div id="toast-box" class="fixed bottom-20 md:bottom-5 right-4 left-4 md:left-auto z-50 hidden px-5 py-3 rounded-xl bg-md-inverseSurface text-md-inverseOnSurface text-xs font-bold shadow-lg text-center md:text-left"></div>
 
   <script>
     // ====================================================
@@ -915,11 +1064,142 @@
     let exploreStreamItems = [];
     let exploreApiPage = 1;
     let isExploreLoading = false;
+    const exploreApiCache = new Map();
 
     let editingCommentWorkId = null;
     let modalTempProgressState = 'completed';
     let modalTempRating = 0;
     let pendingDeleteProfileId = null;
+    let pendingRegAvatarDataUrl = '';
+    let pendingEditAvatarDataUrl = '';
+
+    // ====================================================
+    // プロフィールアイコン生成＆画像リサイズ圧縮ユーティリティ
+    // ====================================================
+    function createDefaultAvatarSvg(name, seedStr = '') {
+      const cleanName = String(name || '?').trim();
+      const initial = Array.from(cleanName)[0] || 'A';
+      const palettes = [
+        { bg: '#DEE0FF', fg: '#00105C' },
+        { bg: '#FFD7F1', fg: '#2D1228' },
+        { bg: '#C4F5E9', fg: '#05382E' },
+        { bg: '#FFE0B2', fg: '#4E2600' },
+        { bg: '#E0E1F9', fg: '#181A2C' },
+        { bg: '#F8BBD0', fg: '#4A0E2E' }
+      ];
+      const key = String(seedStr || cleanName || 'user');
+      let hash = 0;
+      for (let i = 0; i < key.length; i++) {
+        hash = (hash * 31 + key.charCodeAt(i)) >>> 0;
+      }
+      const pal = palettes[hash % palettes.length];
+      const safeInitial = initial.replace(/[&<>"']/g, '');
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160"><rect width="160" height="160" rx="80" fill="${pal.bg}"/><text x="80" y="102" font-family="Outfit, Noto Sans JP, sans-serif" font-size="68" font-weight="800" fill="${pal.fg}" text-anchor="middle">${safeInitial}</text></svg>`;
+      return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+    }
+
+    function getProfileAvatarSrc(profOrAcc) {
+      if (!profOrAcc) return createDefaultAvatarSvg('Guest', 'guest');
+      if (profOrAcc.avatarUrl && String(profOrAcc.avatarUrl).startsWith('data:image/')) {
+        return profOrAcc.avatarUrl;
+      }
+      // アカウントとプロフィールの片方にだけ入っている場合も補完
+      const targetId = profOrAcc.id || profOrAcc.ownerAccountId;
+      if (targetId) {
+        const matchedProf = profiles.find(p => p && p.id === targetId);
+        if (matchedProf && matchedProf.avatarUrl) return matchedProf.avatarUrl;
+        const matchedAcc = accounts.find(a => a && a.id === targetId);
+        if (matchedAcc && matchedAcc.avatarUrl) return matchedAcc.avatarUrl;
+      }
+      return createDefaultAvatarSvg(profOrAcc.name || profOrAcc.handle || 'U', targetId || profOrAcc.handle);
+    }
+
+    function compressAvatarImageFile(file) {
+      return new Promise((resolve, reject) => {
+        if (!file || !file.type.startsWith('image/')) {
+          reject(new Error('画像ファイルを選択してください'));
+          return;
+        }
+        const reader = new FileReader();
+        reader.onerror = () => reject(new Error('ファイルの読み込みに失敗しました'));
+        reader.onload = () => {
+          const img = new Image();
+          img.onerror = () => reject(new Error('画像の解析に失敗しました'));
+          img.onload = () => {
+            const size = 160;
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+
+            // 中央を正方形でクロップして描画
+            const minSide = Math.min(img.width, img.height);
+            const sx = (img.width - minSide) / 2;
+            const sy = (img.height - minSide) / 2;
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, size, size);
+            ctx.drawImage(img, sx, sy, minSide, minSide, 0, 0, size, size);
+
+            // WebPまたはJPEGで軽量出力（約8〜15KB）
+            let dataUrl = canvas.toDataURL('image/webp', 0.84);
+            if (!dataUrl || !dataUrl.startsWith('data:image/webp')) {
+              dataUrl = canvas.toDataURL('image/jpeg', 0.84);
+            }
+            resolve(dataUrl);
+          };
+          img.src = reader.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function handleAvatarFileSelect(event, mode) {
+      const file = event?.target?.files?.[0];
+      if (!file) return;
+      try {
+        const compressedDataUrl = await compressAvatarImageFile(file);
+        if (mode === 'reg') {
+          pendingRegAvatarDataUrl = compressedDataUrl;
+          const prev = document.getElementById('reg-avatar-preview');
+          if (prev) prev.src = compressedDataUrl;
+        } else {
+          pendingEditAvatarDataUrl = compressedDataUrl;
+          const prev = document.getElementById('edit-avatar-preview');
+          if (prev) prev.src = compressedDataUrl;
+        }
+        showToast('アイコン画像を読み込みました');
+      } catch (err) {
+        showToast(err?.message || '画像の処理に失敗しました');
+      } finally {
+        event.target.value = '';
+      }
+    }
+
+    function clearAvatarSelection(mode) {
+      if (mode === 'reg') {
+        pendingRegAvatarDataUrl = '';
+        updateRegDefaultAvatarPreview();
+      } else {
+        pendingEditAvatarDataUrl = '';
+        updateEditDefaultAvatarPreview();
+      }
+    }
+
+    function updateRegDefaultAvatarPreview() {
+      if (pendingRegAvatarDataUrl) return;
+      const name = (document.getElementById('reg-name-input')?.value || '').trim() || '新規';
+      const handle = (document.getElementById('reg-handle-input')?.value || '').trim() || name;
+      const prev = document.getElementById('reg-avatar-preview');
+      if (prev) prev.src = createDefaultAvatarSvg(name, handle);
+    }
+
+    function updateEditDefaultAvatarPreview() {
+      if (pendingEditAvatarDataUrl) return;
+      const prof = getActiveProfile();
+      const name = (document.getElementById('edit-profile-name')?.value || prof?.name || 'U').trim();
+      const prev = document.getElementById('edit-avatar-preview');
+      if (prev) prev.src = createDefaultAvatarSvg(name, prof?.id || name);
+    }
 
     function loadCoverCache() {
       try {
@@ -1079,33 +1359,32 @@
       if (preferManga) {
         if (w.mangaImageUrl) return w.mangaImageUrl;
         if (cacheEntry.manga) return cacheEntry.manga;
-        // 漫画カバーが未取得ならキューに追加して取得する
-        enqueueCoverLookup(w, true);
         if (w.media === '漫画' && w.imageUrl) return w.imageUrl;
-        return cacheEntry.anime || w.animeImageUrl || w.imageUrl || makeFallbackMangaUrl(w.title);
+        const anyImg = cacheEntry.anime || w.animeImageUrl || w.imageUrl;
+        if (anyImg) return anyImg;
+        enqueueCoverLookup(w, false);
+        return makeFallbackMangaUrl(w.title);
       }
 
       // アニメ派 または 両刀 の場合はアニメ版のキービジュアルを優先
       if (w.animeImageUrl) return w.animeImageUrl;
       if (cacheEntry.anime) return cacheEntry.anime;
-      // アニメカバーが未取得ならキューに追加して取得する
-      enqueueCoverLookup(w, true);
       if (w.media !== '漫画' && w.imageUrl) return w.imageUrl;
-      return cacheEntry.manga || w.mangaImageUrl || w.imageUrl || makeFallbackPosterUrl(w.title);
+      const anyImg = cacheEntry.manga || w.mangaImageUrl || w.imageUrl;
+      if (anyImg) return anyImg;
+      enqueueCoverLookup(w, false);
+      return makeFallbackPosterUrl(w.title);
     }
 
-    // 媒体を切り替えた際や未取得時に確実にアニメ＆漫画両方のカバーを取得する
+    // 画像が1枚も存在しない初期シード作品のみバックグラウンドでカバーを取得する
     function enqueueCoverLookup(w, forceIfMissingMedia = false) {
       if (!w || !w.title) return;
       const tKey = normalizeTitleKey(w.title);
       if (!tKey) return;
       const cached = coverCache[tKey] || {};
-      const hasBoth = Boolean(cached.anime && cached.manga);
-      if (hasBoth) return;
+      const hasAnyImage = Boolean(w.imageUrl || w.animeImageUrl || w.mangaImageUrl || cached.anime || cached.manga);
+      if (!forceIfMissingMedia && hasAnyImage) return;
       if (!forceIfMissingMedia && attemptedCoverKeys.has(tKey)) return;
-      if (forceIfMissingMedia && attemptedCoverKeys.has(tKey) && (cached.anime || cached.manga)) {
-        // すでに試行済みでも片方のカバーが欠けている場合は個別再取得を許可
-      }
       pendingCoverQueueMap.set(tKey, w);
       scheduleCoverBatchExecution();
     }
@@ -1248,13 +1527,13 @@
           });
 
           saveCoverCache();
-          renderAll();
+          if (currentTab === 'home') renderAll();
           if (currentTab === 'seasonal') renderSeasonalMainGrid();
           if (currentTab === 'edit') renderExploreStreamGrid();
           if (currentTab === 'library') renderEditorGrid();
 
           if (pendingCoverQueueMap.size > 0) {
-            await new Promise(r => setTimeout(r, 420));
+            await new Promise(r => setTimeout(r, 300));
           }
         }
       } catch (e) {
@@ -1720,7 +1999,25 @@
     // ====================================================
     // 5. ナビゲーション・フィルタリング・媒体・進捗切り替え
     // ====================================================
+    function openMobileDrawer() {
+      const sidebar = document.getElementById('ytm-sidebar');
+      const scrim = document.getElementById('mobile-drawer-scrim');
+      if (sidebar) sidebar.classList.remove('-translate-x-full');
+      if (scrim) scrim.classList.remove('hidden');
+    }
+
+    function closeMobileDrawer() {
+      const sidebar = document.getElementById('ytm-sidebar');
+      const scrim = document.getElementById('mobile-drawer-scrim');
+      if (sidebar) sidebar.classList.add('-translate-x-full');
+      if (scrim) scrim.classList.add('hidden');
+    }
+
     function toggleSidebarCollapse() {
+      if (window.innerWidth < 768) {
+        closeMobileDrawer();
+        return;
+      }
       sidebarCollapsed = !sidebarCollapsed;
       const sidebar = document.getElementById('ytm-sidebar');
       const header = document.getElementById('sidebar-top-header');
@@ -1730,8 +2027,8 @@
       const navItems = document.querySelectorAll('.m3-nav-item');
 
       if (sidebarCollapsed) {
-        sidebar.classList.remove('w-[268px]');
-        sidebar.classList.add('w-[76px]');
+        sidebar.classList.remove('md:w-[268px]');
+        sidebar.classList.add('md:w-[76px]');
         if (header) {
           header.classList.remove('px-4', 'gap-3');
           header.classList.add('px-0', 'justify-center');
@@ -1745,8 +2042,8 @@
         miniLabels.forEach(el => el.classList.remove('hidden'));
         extended.forEach(el => el.classList.add('hidden'));
       } else {
-        sidebar.classList.remove('w-[76px]');
-        sidebar.classList.add('w-[268px]');
+        sidebar.classList.remove('md:w-[76px]');
+        sidebar.classList.add('md:w-[268px]');
         if (header) {
           header.classList.add('px-4', 'gap-3');
           header.classList.remove('px-0', 'justify-center');
@@ -1764,11 +2061,14 @@
 
     function switchTab(tab) {
       currentTab = tab;
+      closeMobileDrawer();
       ['home', 'seasonal', 'edit', 'library'].forEach(t => {
         const view = document.getElementById(`view-${t}`);
         const btn = document.getElementById(`nav-btn-${t}`);
+        const mbtn = document.getElementById(`mnav-btn-${t}`);
         if (view) view.classList.toggle('hidden', t !== tab);
         if (btn) btn.classList.toggle('active', t === tab);
+        if (mbtn) mbtn.classList.toggle('active', t === tab);
       });
 
       if (tab === 'seasonal') {
@@ -1889,6 +2189,7 @@
     function switchActiveProfile(profileId) {
       activeProfileId = profileId;
       highlightSharedWorksMode = false;
+      closeMobileDrawer();
       syncActiveProfileWorks();
       saveSessionOnly();
       if (currentTab !== 'home') {
@@ -2245,8 +2546,9 @@
                   <div class="flex items-center gap-1.5 flex-wrap">
                     <span class="text-[10px] font-extrabold text-teal-800 bg-teal-100 px-2 py-0.5 rounded">見ている (${watchingUsers.length})</span>
                     ${watchingUsers.length > 0 ? watchingUsers.map(u => `
-                      <button onclick="switchActiveProfile('${u.profile.id}')" class="px-2 py-0.5 rounded-full bg-md-surfaceContainerHigh text-md-onSurface text-[10px] font-bold hover:bg-md-primaryContainer">
-                        ${escapeHtmlAttr(u.profile.name)}
+                      <button onclick="switchActiveProfile('${u.profile.id}')" class="pl-1 pr-2 py-0.5 rounded-full bg-md-surfaceContainerHigh text-md-onSurface text-[10px] font-bold hover:bg-md-primaryContainer inline-flex items-center gap-1">
+                        <img src="${getProfileAvatarSrc(u.profile)}" alt="" class="w-4 h-4 rounded-full object-cover shrink-0">
+                        <span>${escapeHtmlAttr(u.profile.name)}</span>
                       </button>
                     `).join('') : `<span class="text-[11px] text-md-onSurfaceVariant">まだいません</span>`}
                   </div>
@@ -2254,8 +2556,9 @@
                   <div class="flex items-center gap-1.5 flex-wrap">
                     <span class="text-[10px] font-extrabold text-amber-900 bg-amber-100 px-2 py-0.5 rounded">見る予定 (${planningUsers.length})</span>
                     ${planningUsers.length > 0 ? planningUsers.map(u => `
-                      <button onclick="switchActiveProfile('${u.profile.id}')" class="px-2 py-0.5 rounded-full bg-md-surfaceContainerHigh text-md-onSurface text-[10px] font-bold hover:bg-md-tertiaryContainer">
-                        ${escapeHtmlAttr(u.profile.name)}
+                      <button onclick="switchActiveProfile('${u.profile.id}')" class="pl-1 pr-2 py-0.5 rounded-full bg-md-surfaceContainerHigh text-md-onSurface text-[10px] font-bold hover:bg-md-tertiaryContainer inline-flex items-center gap-1">
+                        <img src="${getProfileAvatarSrc(u.profile)}" alt="" class="w-4 h-4 rounded-full object-cover shrink-0">
+                        <span>${escapeHtmlAttr(u.profile.name)}</span>
                       </button>
                     `).join('') : `<span class="text-[11px] text-md-onSurfaceVariant">まだいません</span>`}
                   </div>
@@ -2331,9 +2634,6 @@
       exploreApiPage = 1;
       exploreStreamItems = getSeedCatalogForCurrentExploreFilter();
       renderExploreStreamGrid();
-      if (exploreStreamItems.length > 0) {
-        batchFetchCoversFromAniList(exploreStreamItems);
-      }
       loadNextExploreBatchFromApi();
     }
 
@@ -2355,7 +2655,6 @@
       if (exploreSearchQuery) {
         executeExploreSearch();
       } else {
-        // 選んだボタン（すべて / アニメ / 漫画）に合わせて候補リストを再構成・APIから取得
         exploreStreamItems = getSeedCatalogForCurrentExploreFilter();
         renderExploreStreamGrid();
         loadNextExploreBatchFromApi();
@@ -2521,28 +2820,111 @@
       loadNextExploreBatchFromApi();
     }
 
-    async function loadNextExploreBatchFromApi(retryDepth = 0) {
+    function appendMediaListToExploreStream(list) {
+      let newlyAddedCount = 0;
+      (list || []).forEach(m => {
+        const rawTitle = m.title?.native || m.title?.romaji;
+        if (!rawTitle) return;
+        const canonicalTitle = extractCanonicalSeriesTitle(rawTitle);
+        const tKey = normalizeTitleKey(canonicalTitle);
+        if (!tKey) return;
+
+        const startYear = m.startDate?.year || null;
+        const cover = m.coverImage?.large || '';
+        const animeCover = m.type === 'ANIME' ? cover : (coverCache[tKey]?.anime || '');
+        const mangaCover = m.type === 'MANGA' ? cover : (coverCache[tKey]?.manga || '');
+
+        if (animeCover || mangaCover) {
+          const entry = {
+            anime: animeCover || coverCache[tKey]?.anime || '',
+            manga: mangaCover || coverCache[tKey]?.manga || ''
+          };
+          coverCache[tKey] = entry;
+          coverCache[m.id] = entry;
+        }
+
+        const existingSeriesItem = exploreStreamItems.find(existing => isSameWorkOrSeries(existing, { title: canonicalTitle }));
+        if (existingSeriesItem) {
+          if (startYear && !existingSeriesItem.startYear) {
+            existingSeriesItem.startYear = startYear;
+          }
+          if (m.type === 'MANGA' && existingSeriesItem.media === 'アニメ') {
+            existingSeriesItem.media = 'アニメ・漫画';
+          } else if (m.type === 'ANIME' && existingSeriesItem.media === '漫画') {
+            existingSeriesItem.media = 'アニメ・漫画';
+          }
+          if (!existingSeriesItem.animeImageUrl && animeCover) existingSeriesItem.animeImageUrl = animeCover;
+          if (!existingSeriesItem.mangaImageUrl && mangaCover) existingSeriesItem.mangaImageUrl = mangaCover;
+          if (!existingSeriesItem.imageUrl && (animeCover || mangaCover)) {
+            existingSeriesItem.imageUrl = animeCover || mangaCover;
+          }
+          if (existingSeriesItem.id) {
+            coverCache[existingSeriesItem.id] = coverCache[tKey];
+          }
+          return;
+        }
+
+        const defaultVia = exploreMediaType === 'MANGA'
+          ? 'manga'
+          : (exploreMediaType === 'ANIME' ? 'anime' : (m.type === 'MANGA' ? 'manga' : 'anime'));
+        const yearPrefix = startYear ? `${startYear}年 • ` : '';
+
+        exploreStreamItems.push({
+          id: m.id,
+          anilistId: m.id,
+          title: canonicalTitle,
+          searchTitle: canonicalTitle,
+          startYear,
+          media: m.type === 'MANGA' ? '漫画' : 'アニメ',
+          consumedVia: defaultVia,
+          progressState: 'completed',
+          progressNote: '',
+          status: 'none',
+          comment: '',
+          sub: m.type === 'MANGA' ? `${yearPrefix}原作コミックス` : `${yearPrefix}シリーズ統合`,
+          imageUrl: animeCover || mangaCover || cover,
+          animeImageUrl: animeCover,
+          mangaImageUrl: mangaCover
+        });
+        newlyAddedCount++;
+      });
+      return newlyAddedCount;
+    }
+
+    async function loadNextExploreBatchFromApi() {
       if (isExploreLoading || exploreSearchQuery) return;
       isExploreLoading = true;
       const btn = document.getElementById('explore-load-more-btn');
       if (btn) btn.textContent = '読み込み中...';
+
+      const currentPage = exploreApiPage;
+      const cacheKey = `${exploreMediaType}_${exploreEraFilter}_${currentPage}`;
+
+      // キャッシュ済みのページがあればAPI通信なしで即座に展開（0秒表示）
+      if (exploreApiCache.has(cacheKey)) {
+        exploreApiPage++;
+        appendMediaListToExploreStream(exploreApiCache.get(cacheKey));
+        renderExploreStreamGrid();
+        isExploreLoading = false;
+        if (btn) btn.textContent = 'さらにアニメ・漫画を読み込む';
+        return;
+      }
 
       const eraRange = getEraDateRange(exploreEraFilter);
       const dateFilter = eraRange ? `, startDate_greater: ${eraRange.greater}, startDate_lesser: ${eraRange.lesser}` : '';
 
       const queryAll = `
         query ($page: Int) {
-          animePage: Page(page: $page, perPage: 28) {
+          animePage: Page(page: $page, perPage: 25) {
             media(type: ANIME ${dateFilter}, sort: POPULARITY_DESC, isAdult: false) {
               id
               type
-              format
               startDate { year }
               title { native romaji }
               coverImage { large }
             }
           }
-          mangaPage: Page(page: $page, perPage: 24) {
+          mangaPage: Page(page: $page, perPage: 25) {
             media(type: MANGA ${dateFilter}, sort: POPULARITY_DESC, isAdult: false) {
               id
               type
@@ -2556,11 +2938,10 @@
 
       const querySingle = `
         query ($page: Int, $type: MediaType) {
-          Page(page: $page, perPage: 42) {
+          Page(page: $page, perPage: 40) {
             media(type: $type ${dateFilter}, sort: POPULARITY_DESC, isAdult: false) {
               id
               type
-              format
               startDate { year }
               title { native romaji }
               coverImage { large }
@@ -2569,13 +2950,11 @@
         }
       `;
 
-      let newlyAddedCount = 0;
-
       try {
         const isAll = exploreMediaType === 'ALL';
         const bodyPayload = isAll
-          ? { query: queryAll, variables: { page: exploreApiPage } }
-          : { query: querySingle, variables: { page: exploreApiPage, type: exploreMediaType === 'MANGA' ? 'MANGA' : 'ANIME' } };
+          ? { query: queryAll, variables: { page: currentPage } }
+          : { query: querySingle, variables: { page: currentPage, type: exploreMediaType === 'MANGA' ? 'MANGA' : 'ANIME' } };
 
         const res = await fetch('https://graphql.anilist.co', {
           method: 'POST',
@@ -2597,74 +2976,9 @@
             list = json?.data?.Page?.media || [];
           }
 
+          exploreApiCache.set(cacheKey, list);
           exploreApiPage++;
-          list.forEach(m => {
-            const rawTitle = m.title?.native || m.title?.romaji;
-            if (!rawTitle) return;
-            const canonicalTitle = extractCanonicalSeriesTitle(rawTitle);
-            const tKey = normalizeTitleKey(canonicalTitle);
-            if (!tKey) return;
-
-            const startYear = m.startDate?.year || null;
-            const cover = m.coverImage?.large || '';
-            const animeCover = m.type === 'ANIME' ? cover : (coverCache[tKey]?.anime || '');
-            const mangaCover = m.type === 'MANGA' ? cover : (coverCache[tKey]?.manga || '');
-
-            if (animeCover || mangaCover) {
-              const entry = {
-                anime: animeCover || coverCache[tKey]?.anime || '',
-                manga: mangaCover || coverCache[tKey]?.manga || ''
-              };
-              coverCache[tKey] = entry;
-              coverCache[m.id] = entry;
-            }
-
-            // 既に同じシリーズ作品が探索リストに存在する場合は画像と媒体情報を補完して統合
-            const existingSeriesItem = exploreStreamItems.find(existing => isSameWorkOrSeries(existing, { title: canonicalTitle }));
-            if (existingSeriesItem) {
-              if (startYear && !existingSeriesItem.startYear) {
-                existingSeriesItem.startYear = startYear;
-              }
-              if (m.type === 'MANGA' && existingSeriesItem.media === 'アニメ') {
-                existingSeriesItem.media = 'アニメ・漫画';
-              } else if (m.type === 'ANIME' && existingSeriesItem.media === '漫画') {
-                existingSeriesItem.media = 'アニメ・漫画';
-              }
-              if (!existingSeriesItem.animeImageUrl && animeCover) existingSeriesItem.animeImageUrl = animeCover;
-              if (!existingSeriesItem.mangaImageUrl && mangaCover) existingSeriesItem.mangaImageUrl = mangaCover;
-              if (!existingSeriesItem.imageUrl && (animeCover || mangaCover)) {
-                existingSeriesItem.imageUrl = animeCover || mangaCover;
-              }
-              if (existingSeriesItem.id) {
-                coverCache[existingSeriesItem.id] = coverCache[tKey];
-              }
-              return;
-            }
-
-            const defaultVia = exploreMediaType === 'MANGA'
-              ? 'manga'
-              : (exploreMediaType === 'ANIME' ? 'anime' : (m.type === 'MANGA' ? 'manga' : 'anime'));
-            const yearPrefix = startYear ? `${startYear}年 • ` : '';
-
-            exploreStreamItems.push({
-              id: m.id,
-              anilistId: m.id,
-              title: canonicalTitle,
-              searchTitle: canonicalTitle,
-              startYear,
-              media: m.type === 'MANGA' ? '漫画' : 'アニメ',
-              consumedVia: defaultVia,
-              progressState: 'completed',
-              progressNote: '',
-              status: 'none',
-              comment: '',
-              sub: m.type === 'MANGA' ? `${yearPrefix}原作コミックス` : `${yearPrefix}シリーズ統合`,
-              imageUrl: animeCover || mangaCover || cover,
-              animeImageUrl: animeCover,
-              mangaImageUrl: mangaCover
-            });
-            newlyAddedCount++;
-          });
+          appendMediaListToExploreStream(list);
           saveCoverCache();
           renderExploreStreamGrid();
         }
@@ -2672,11 +2986,6 @@
 
       isExploreLoading = false;
       if (btn) btn.textContent = 'さらにアニメ・漫画を読み込む';
-
-      // シリーズ統合によって1ページあたりの新規作品が少なかった場合は自動的に次ページを追加取得
-      if (newlyAddedCount < 10 && retryDepth < 2 && !exploreSearchQuery) {
-        loadNextExploreBatchFromApi(retryDepth + 1);
-      }
     }
 
     function shuffleAndLoadMoreExplore() {
@@ -2900,11 +3209,11 @@
       const fallback = via === 'manga' ? makeFallbackMangaUrl(w.title) : makeFallbackPosterUrl(w.title);
       const isMangaStyle = via === 'manga';
 
-      let cardWidthClass = 'w-[172px] sm:w-[190px]';
+      let cardWidthClass = 'w-[152px] sm:w-[190px]';
       if (isGoldHighlight) {
-        cardWidthClass = 'w-[198px] sm:w-[214px] p-2.5 rounded-2xl gold-medal-card';
+        cardWidthClass = 'w-[178px] sm:w-[214px] p-2.5 rounded-2xl gold-medal-card';
       } else if (isSharedHighlight) {
-        cardWidthClass = 'w-[228px] sm:w-[248px] p-3 rounded-2xl bg-md-primaryContainer/45 ring-2 ring-md-primary';
+        cardWidthClass = 'w-[204px] sm:w-[248px] p-3 rounded-2xl bg-md-primaryContainer/45 ring-2 ring-md-primary';
       }
 
       let posterBorderClass = viaMeta.cardBorderClass;
@@ -3061,12 +3370,15 @@
       const loggedInProf = getLoggedInProfile();
       const nameEl = document.getElementById('sidebar-auth-name');
       const handleEl = document.getElementById('sidebar-auth-handle');
+      const avatarEl = document.getElementById('sidebar-auth-avatar');
       if (loggedInProf) {
         nameEl.textContent = loggedInProf.name;
         handleEl.textContent = loggedInProf.handle;
+        if (avatarEl) avatarEl.src = getProfileAvatarSrc(loggedInProf);
       } else {
         nameEl.textContent = '未ログイン（ゲスト）';
         handleEl.textContent = '新規作成またはログイン';
+        if (avatarEl) avatarEl.src = createDefaultAvatarSvg('?', 'guest');
       }
 
       document.getElementById('sidebar-profile-count').textContent = `${profiles.length}人`;
@@ -3082,15 +3394,17 @@
         const isCurrent = p.id === activeProfileId;
         const isMine = Boolean(loggedInAccountId && p.ownerAccountId === loggedInAccountId);
         const count = (p.works || []).filter(w => w.status && w.status !== 'none').length;
+        const avatarSrc = getProfileAvatarSrc(p);
         return `
           <div
             onclick="switchActiveProfile('${escapeHtmlAttr(p.id)}')"
-            class="w-full p-2.5 rounded-xl text-left flex items-center justify-between gap-2 border cursor-pointer ${
+            class="w-full p-2.5 rounded-xl text-left flex items-center justify-between gap-2.5 border cursor-pointer ${
               isCurrent
                 ? 'bg-md-primaryContainer text-md-onPrimaryContainer border-md-primary font-extrabold'
                 : 'bg-md-surfaceContainerLowest text-md-onSurface border-md-outlineVariant/60 hover:bg-md-surfaceContainerHigh'
             }"
           >
+            <img src="${avatarSrc}" alt="${escapeHtmlAttr(p.name)}" class="w-8 h-8 rounded-full object-cover border border-md-outlineVariant shrink-0 bg-md-surfaceContainerHigh">
             <div class="min-w-0 flex-1">
               <div class="flex items-center gap-1.5">
                 <span class="text-xs font-extrabold truncate">${escapeHtmlAttr(p.name)}</span>
@@ -3259,6 +3573,12 @@
       document.getElementById('profile-display-name').textContent = prof.name;
       document.getElementById('profile-display-handle').textContent = prof.handle;
       document.getElementById('profile-display-bio').textContent = prof.bio || '';
+      const profAvatarEl = document.getElementById('profile-display-avatar');
+      if (profAvatarEl) profAvatarEl.src = getProfileAvatarSrc(prof);
+      const avatarOverlay = document.getElementById('profile-avatar-edit-overlay');
+      const avatarWrapper = document.getElementById('profile-avatar-wrapper');
+      if (avatarOverlay) avatarOverlay.classList.toggle('hidden', !editable);
+      if (avatarWrapper) avatarWrapper.classList.toggle('cursor-pointer', editable);
 
       const ownerBadge = document.getElementById('profile-ownership-badge');
       const permPill = document.getElementById('header-permission-pill');
@@ -3533,6 +3853,8 @@
     function openAuthModal(tab = 'login') {
       document.getElementById('auth-error-box').classList.add('hidden');
       document.getElementById('auth-modal').classList.remove('hidden');
+      pendingRegAvatarDataUrl = '';
+      updateRegDefaultAvatarPreview();
       switchAuthModalTab(tab);
       renderExistingAccountsInAuthModal();
     }
@@ -3561,12 +3883,15 @@
         return;
       }
       box.innerHTML = accounts.map(acc => `
-        <div class="flex items-center justify-between p-2 rounded-xl bg-md-surfaceContainerLowest border border-md-outlineVariant text-xs">
-          <div>
-            <span class="font-extrabold text-md-onSurface">${escapeHtmlAttr(acc.name)}</span>
-            <span class="text-md-onSurfaceVariant ml-1">@${escapeHtmlAttr(acc.handle)}</span>
+        <div class="flex items-center justify-between p-2 rounded-xl bg-md-surfaceContainerLowest border border-md-outlineVariant text-xs gap-2">
+          <div class="flex items-center gap-2 min-w-0">
+            <img src="${getProfileAvatarSrc(acc)}" alt="" class="w-7 h-7 rounded-full object-cover border border-md-outlineVariant shrink-0">
+            <div class="truncate">
+              <span class="font-extrabold text-md-onSurface">${escapeHtmlAttr(acc.name)}</span>
+              <span class="text-md-onSurfaceVariant ml-1">@${escapeHtmlAttr(acc.handle)}</span>
+            </div>
           </div>
-          <div class="flex items-center gap-1.5">
+          <div class="flex items-center gap-1.5 shrink-0">
             <button onclick="prefillLoginHandle('${escapeHtmlAttr(acc.handle)}')" class="px-2.5 py-1 rounded-lg bg-md-primaryContainer text-md-onPrimaryContainer text-[11px] font-bold">IDを入力</button>
             <button onclick="closeAuthModal(); switchActiveProfile('${escapeHtmlAttr(acc.id)}')" class="px-2.5 py-1 rounded-lg bg-md-surfaceContainerHigh text-md-onSurface text-[11px] font-bold">閲覧のみ</button>
           </div>
@@ -3627,14 +3952,14 @@
         showAuthError('そのアカウントIDは既に使用されています');
         return;
       }
-
-      const newAcc = { id: rawHandle, handle: rawHandle, passwordHash: pwd, name };
+      const newAcc = { id: rawHandle, handle: rawHandle, passwordHash: pwd, name, avatarUrl: pendingRegAvatarDataUrl || '' };
       const newProf = {
         id: rawHandle,
         ownerAccountId: rawHandle,
         name,
         handle: `@${rawHandle}`,
         bio: bio || 'よろしくお願いします！',
+        avatarUrl: pendingRegAvatarDataUrl || '',
         works: []
       };
 
@@ -3663,6 +3988,9 @@
       const prof = getActiveProfile();
       document.getElementById('edit-profile-name').value = prof.name || '';
       document.getElementById('edit-profile-bio').value = prof.bio || '';
+      pendingEditAvatarDataUrl = prof.avatarUrl || '';
+      const prev = document.getElementById('edit-avatar-preview');
+      if (prev) prev.src = getProfileAvatarSrc(prof);
       document.getElementById('profile-edit-modal').classList.remove('hidden');
     }
 
@@ -3675,16 +4003,18 @@
       const prof = getActiveProfile();
       const name = (document.getElementById('edit-profile-name').value || '').trim();
       const bio = (document.getElementById('edit-profile-bio').value || '').trim();
+      const acc = accounts.find(a => a.id === prof.ownerAccountId);
       if (name) {
         prof.name = name;
-        const acc = accounts.find(a => a.id === prof.ownerAccountId);
         if (acc) acc.name = name;
       }
       prof.bio = bio;
+      prof.avatarUrl = pendingEditAvatarDataUrl || '';
+      if (acc) acc.avatarUrl = pendingEditAvatarDataUrl || '';
       saveStateToStorage(true);
       closeProfileEditModal();
       renderAll();
-      showToast('プロフィール情報を更新しました');
+      showToast('プロフィールとアイコンを更新しました');
     }
 
     // --- 共有モーダル ---
